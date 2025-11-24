@@ -8,9 +8,9 @@ public record CreateMovieDto(
     int AgeRating,
     string ImageURL,
     int Duration,
-    string Genre,
-    List<string> ContentWarnings,
-    List<string> AvailableQualities
+    GenreType Genre,
+    List<ContentWarningType> ContentWarnings,
+    List<QualityType> AvailableQualities
 );
 
 public record MovieDto(
