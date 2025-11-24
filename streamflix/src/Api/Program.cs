@@ -23,7 +23,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Commented out because it was causing issues with some requests during development
+// app.UseHttpsRedirection();
 
 app.MapControllers();
 
@@ -32,7 +33,6 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
     context.Database.Migrate();
-    await DbSeeder.SeedAsync(context);
 }
 
 app.Run();

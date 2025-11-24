@@ -22,9 +22,6 @@ public class ContentController : ControllerBase
     public async Task<ActionResult<IEnumerable<MovieDto>>> GetMovies()
     {
         var movies = await _db.Movies
-            .Include(m => m.Genre)
-            .Include(m => m.ContentWarnings)
-            .Include(m => m.AvailableQualities)
             .ToListAsync();
 
         var movieDtos = movies.Select(m => new MovieDto(
@@ -34,9 +31,9 @@ public class ContentController : ControllerBase
             m.AgeRating,
             m.ImageURL,
             m.Duration,
-            m.Genre.GenreType.ToString(),
-            m.ContentWarnings.Select(cw => cw.ContentWarningType.ToString()).ToList(),
-            m.AvailableQualities.Select(q => q.QualityType.ToString()).ToList()
+            m.Genre,
+            m.ContentWarnings,
+            m.AvailableQualities
         ));
 
         return Ok(movieDtos);
@@ -45,17 +42,6 @@ public class ContentController : ControllerBase
     [HttpPost("movies")]
     public async Task<ActionResult<MovieDto>> CreateMovie(CreateMovieDto request)
     {
-        var genre = await _db.Genres.FirstOrDefaultAsync(g => g.GenreType == request.Genre);
-        if (genre == null) return BadRequest("Invalid Genre");
-
-        var qualities = await _db.Qualities
-            .Where(q => request.AvailableQualities.Contains(q.QualityType))
-            .ToListAsync();
-
-        var warnings = await _db.ContentWarnings
-            .Where(w => request.ContentWarnings.Contains(w.ContentWarningType))
-            .ToListAsync();
-
         var movie = new Movie
         {
             Title = request.Title,
@@ -63,9 +49,9 @@ public class ContentController : ControllerBase
             AgeRating = request.AgeRating,
             ImageURL = request.ImageURL,
             Duration = request.Duration,
-            Genre = genre,
-            AvailableQualities = qualities,
-            ContentWarnings = warnings
+            Genre = request.Genre,
+            AvailableQualities = request.AvailableQualities,
+            ContentWarnings = request.ContentWarnings
         };
 
         _db.Movies.Add(movie);
@@ -78,9 +64,9 @@ public class ContentController : ControllerBase
             movie.AgeRating,
             movie.ImageURL,
             movie.Duration,
-            movie.Genre.GenreType.ToString(),
-            movie.ContentWarnings.Select(cw => cw.ContentWarningType.ToString()).ToList(),
-            movie.AvailableQualities.Select(q => q.QualityType.ToString()).ToList()
+            movie.Genre,
+            movie.ContentWarnings,
+            movie.AvailableQualities
         );
 
         return CreatedAtAction(nameof(GetMovies), new { id = movie.ContentId }, responseDto);
@@ -91,9 +77,6 @@ public class ContentController : ControllerBase
     public async Task<ActionResult<IEnumerable<SeriesDto>>> GetSeries()
     {
         var series = await _db.Series
-            .Include(s => s.Genre)
-            .Include(s => s.ContentWarnings)
-            .Include(s => s.AvailableQualities)
             .Include(s => s.Seasons)
                 .ThenInclude(season => season.Episodes)
             .ToListAsync();
@@ -105,9 +88,9 @@ public class ContentController : ControllerBase
             s.AgeRating,
             s.ImageURL,
             s.TotalSeasons,
-            s.Genre.GenreType.ToString(),
-            s.ContentWarnings.Select(cw => cw.ContentWarningType.ToString()).ToList(),
-            s.AvailableQualities.Select(q => q.QualityType.ToString()).ToList(),
+            s.Genre,
+            s.ContentWarnings,
+            s.AvailableQualities,
             s.Seasons.Select(season => new SeasonDto(
                 season.SeasonId,
                 season.SeasonNumber,
@@ -127,17 +110,6 @@ public class ContentController : ControllerBase
     [HttpPost("series")]
     public async Task<ActionResult<SeriesDto>> CreateSeries(CreateSeriesDto request)
     {
-        var genre = await _db.Genres.FirstOrDefaultAsync(g => g.GenreType == request.Genre);
-        if (genre == null) return BadRequest("Invalid Genre");
-
-        var qualities = await _db.Qualities
-            .Where(q => request.AvailableQualities.Contains(q.QualityType))
-            .ToListAsync();
-
-        var warnings = await _db.ContentWarnings
-            .Where(w => request.ContentWarnings.Contains(w.ContentWarningType))
-            .ToListAsync();
-
         var series = new Series
         {
             Title = request.Title,
@@ -145,9 +117,9 @@ public class ContentController : ControllerBase
             AgeRating = request.AgeRating,
             ImageURL = request.ImageURL,
             TotalSeasons = request.TotalSeasons,
-            Genre = genre,
-            AvailableQualities = qualities,
-            ContentWarnings = warnings
+            Genre = request.Genre,
+            AvailableQualities = request.AvailableQualities,
+            ContentWarnings = request.ContentWarnings
         };
 
         _db.Series.Add(series);
@@ -160,9 +132,9 @@ public class ContentController : ControllerBase
             series.AgeRating,
             series.ImageURL,
             series.TotalSeasons,
-            series.Genre.GenreType.ToString(),
-            series.ContentWarnings.Select(cw => cw.ContentWarningType.ToString()).ToList(),
-            series.AvailableQualities.Select(q => q.QualityType.ToString()).ToList(),
+            series.Genre,
+            series.ContentWarnings,
+            series.AvailableQualities,
             new List<SeasonDto>()
         );
 

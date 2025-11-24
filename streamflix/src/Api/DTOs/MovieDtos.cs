@@ -1,5 +1,3 @@
-using Streamflix.Infrastructure.Enums;
-
 namespace Streamflix.Api.DTOs;
 
 public record CreateMovieDto(
@@ -8,9 +6,9 @@ public record CreateMovieDto(
     int AgeRating,
     string ImageURL,
     int Duration,
-    GenreType Genre,
-    List<ContentWarningType> ContentWarnings,
-    List<QualityType> AvailableQualities
+    string Genre,
+    List<string> ContentWarnings,
+    List<string> AvailableQualities
 );
 
 public record MovieDto(

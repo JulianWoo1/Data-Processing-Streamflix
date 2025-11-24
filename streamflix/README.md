@@ -49,7 +49,6 @@ Once the application is running, you can access the Swagger UI to test the endpo
 *   **`src/Infrastructure`**: Database and Domain logic.
     *   **`Entities`**: Database table definitions.
     *   **`Data`**: DbContext and Seeding logic.
-    *   **`Enums`**: Static values (GenreType, QualityType, etc.).
 
 ### How to Add New Entities
 
