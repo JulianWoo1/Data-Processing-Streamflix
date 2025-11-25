@@ -128,3 +128,18 @@ Create the endpoints to manage accounts.
 
 **"Connection Refused" when running locally (`dotnet run`)**
 *   If running outside Docker, you must change the connection string in `appsettings.Development.json` to `"Host=localhost"`.
+
+**Reset the database volume (DEV only – this wipes all data)**
+If migrations get into a bad state (e.g., errors about tables already existing), you can reset the Postgres data volume and let the app recreate the schema:
+
+```bash
+docker-compose down
+
+# Remove the Postgres data volume (this wipes the DB)
+docker volume rm streamflix_db_data
+
+# Recreate and start everything
+docker compose up --build -d
+```
+
+After this, the `db` container starts with a fresh empty database and the API will apply all EF Core migrations again on startup.
