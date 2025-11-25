@@ -31,6 +31,32 @@ docker-compose up --build
 *   The database migrations will apply automatically on startup.
 *   Seed data (Genres, Qualities, Warnings) will be inserted automatically.
 
+### 3. Access the Database (pgAdmin)
+
+This project includes **pgAdmin** as a web-based PostgreSQL management tool, running in Docker.
+
+Once `docker-compose` is up:
+
+*   Open: `http://localhost:8080`
+*   Log in with (from `docker-compose.yml`):
+    *   Email: `admin@example.com`
+    *   Password: `admin`
+
+#### Register the database server in pgAdmin (first time only per machine)
+
+1. In pgAdmin, right-click **Servers** → **Register** → **Server…**
+2. **General** tab:
+    *   Name: `streamflix` (any name is fine)
+3. **Connection** tab:
+    *   Host name/address: `db`
+    *   Port: `5432`
+    *   Maintenance database: `streamflixdb`
+    *   Username: `postgres`
+    *   Password: `postgres`
+4. Click **Save**.
+
+You should now see the `streamflixdb` database under **Databases → streamflixdb → Schemas → public → Tables**.
+
 ### 3. Access the API
 
 Once the application is running, you can access the Swagger UI to test the endpoints:
