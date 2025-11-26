@@ -1,5 +1,3 @@
-using Streamflix.Infrastructure.Enums;
-
 namespace Streamflix.Infrastructure.Entities;
 
 public class Genre

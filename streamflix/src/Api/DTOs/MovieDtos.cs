@@ -1,5 +1,3 @@
-using Streamflix.Infrastructure.Enums;
-
 namespace Streamflix.Api.DTOs;
 
 public record CreateMovieDto(

@@ -17,6 +17,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Genre> Genres { get; set; }
     public DbSet<ContentWarning> ContentWarnings { get; set; }
     public DbSet<Quality> Qualities { get; set; }
+    public DbSet<Account> Accounts { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

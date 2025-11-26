@@ -34,9 +34,9 @@ public class ContentController : ControllerBase
             m.AgeRating,
             m.ImageURL,
             m.Duration,
-            m.Genre,
-            m.ContentWarnings.Select().ToList(),
-            m.AvailableQualities.Select().ToList()
+            m.Genre.GenreType,
+            m.ContentWarnings.Select(cw => cw.ContentWarningType).ToList(),
+            m.AvailableQualities.Select(q => q.QualityType).ToList()
         ));
 
         return Ok(movieDtos);
