@@ -10,107 +10,59 @@ namespace Streamflix.Api.Controllers;
 [Route("[controller]")]
 public class AccountController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IAccountService _accountService;
 
-    public AccountController(ApplicationDbContext db)
+    public AccountController(IAccountService accountService)
     {
-        _db = db;
+        _accountService = accountService;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] CreateAccountDto dto)
     {
-        if (await _db.Accounts.AnyAsync(a => a.Email == dto.Email))
-            return BadRequest("Email already in use.");
-
-        var account = new Account
+        try
         {
-            Email = dto.Email,
-            Password = dto.Password,
-            VerificationToken = Guid.NewGuid().ToString(),
-            TokenExpire = DateTime.UtcNow.AddHours(24),
-            RegistrationDate = DateTime.UtcNow,
-            IsActive = true,
-            IsVerified = false
-        };
-
-        _db.Accounts.Add(account);
-        await _db.SaveChangesAsync();
-
-        return Ok(new { account.AccountId, account.Email });
+            var account = await _accountService.RegisterAsync(dto);
+            return Ok(new { account.AccountId, account.Email });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPost("verify")]
     public async Task<IActionResult> Verify([FromBody] VerifyAccountDto dto)
     {
-        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == dto.Email);
-        if (account == null) return NotFound("Account not found");
-        if (account.IsVerified) return BadRequest("Account is already verified.");
-        if (account.VerificationToken != dto.VerificationToken) return BadRequest("Invalid token.");
-        if (account.TokenExpire == null || account.TokenExpire < DateTime.UtcNow) return BadRequest("Token expired.");
-
-        account.IsVerified = true;
-        account.VerificationToken = null;
-        account.TokenExpire = null;
-
-        await _db.SaveChangesAsync();
-        return Ok("Account verified successfully");
+        var success = await _accountService.VerifyAsync(dto);
+        return success ? Ok("Account verified successfully") : BadRequest("Verification failed.");
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == dto.Email);
-        if (account == null) return Unauthorized("Invalid credentials.");
-        if (!account.IsVerified) return Unauthorized("Account is not verified.");
-        if (account.Password != dto.Password) return Unauthorized("Invalid credentials.");
-
-        account.LastLogin = DateTime.UtcNow;
-        account.FailedLoginAttempts = 0;
-        await _db.SaveChangesAsync();
-
-        return Ok(new { account.AccountId, account.Email });
-    }
-
-    [HttpPost("logout")]
-    public IActionResult Logout()
-    {
-        return Ok("Logged out successfully");
+        var token = await _accountService.LoginAsync(dto);
+        return token == null ? Unauthorized("Invalid credentials.") : Ok(new { Token = token });
     }
 
     [HttpPost("requestPasswordReset")]
     public async Task<IActionResult> RequestPasswordReset([FromBody] RequestPasswordResetDto dto)
     {
-        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == dto.Email);
-        if (account == null) return Ok();
-
-        account.PasswordResetToken = Guid.NewGuid().ToString();
-        account.TokenExpire = DateTime.UtcNow.AddHours(1);
-
-        await _db.SaveChangesAsync();
+        await _accountService.RequestPasswordResetAsync(dto);
         return Ok("If an account exists, a reset link was sent.");
     }
 
     [HttpPost("resetPassword")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
     {
-        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == dto.Email);
-        if (account == null) return BadRequest("Invalid request.");
-        if (account.PasswordResetToken == null || account.PasswordResetToken != dto.PasswordResetToken) return BadRequest("Invalid token.");
-        if (account.TokenExpire == null || account.TokenExpire < DateTime.UtcNow) return BadRequest("Token expired.");
-
-        account.Password = dto.NewPassword;
-        account.PasswordResetToken = null;
-        account.TokenExpire = null;
-
-        await _db.SaveChangesAsync();
-        return Ok("Password reset successfully.");
+        var success = await _accountService.ResetPasswordAsync(dto);
+        return success ? Ok("Password reset successfully.") : BadRequest("Reset failed.");
     }
 
     [HttpGet("getAccountInfo")]
     public async Task<IActionResult> GetAccountInfo([FromQuery] string email)
     {
-        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == email);
+        var account = await _accountService.GetAccountInfoAsync(email);
         if (account == null) return NotFound();
 
         return Ok(new
