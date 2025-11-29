@@ -1,3 +1,4 @@
+/*
 namespace Streamflix.Api.DTOs;
 
 public record CreateSubscriptionDto(
@@ -17,3 +18,5 @@ public record UpgradeSubscriptionDto(
 public record CancelSubscriptionDto(
     int SubscriptionId
 );
+
+*/

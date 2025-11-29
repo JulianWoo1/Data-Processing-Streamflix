@@ -14,10 +14,6 @@ public class ApplicationDbContext : DbContext
     public DbSet<Series> Series { get; set; }
     public DbSet<Episode> Episodes { get; set; }
     public DbSet<Season> Seasons { get; set; }
-    public DbSet<Genre> Genres { get; set; }
-    public DbSet<ContentWarning> ContentWarnings { get; set; }
-    public DbSet<Quality> Qualities { get; set; }
-    public DbSet<Account> Accounts { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,24 +25,6 @@ public class ApplicationDbContext : DbContext
 
         // Configure relationships
         
-        // Genre -> Content (One-to-Many)
-        modelBuilder.Entity<Content>()
-            .HasOne(c => c.Genre)
-            .WithMany(g => g.Contents)
-            .HasForeignKey(c => c.GenreId);
-
-        // Content <-> ContentWarning (Many-to-Many)
-        modelBuilder.Entity<Content>()
-            .HasMany(c => c.ContentWarnings)
-            .WithMany(cw => cw.Contents)
-            .UsingEntity(j => j.ToTable("ContentContentWarnings"));
-
-        // Content <-> Quality (Many-to-Many)
-        modelBuilder.Entity<Content>()
-            .HasMany(c => c.AvailableQualities)
-            .WithMany(q => q.Contents)
-            .UsingEntity(j => j.ToTable("ContentQualities"));
-
         // Series -> Season (One-to-Many)
         modelBuilder.Entity<Season>()
             .HasOne(s => s.Series)

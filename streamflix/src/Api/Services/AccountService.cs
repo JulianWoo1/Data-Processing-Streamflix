@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Streamflix.Infrastructure.Data;
 using Streamflix.Infrastructure.Entities;
 using Streamflix.Api.DTOs;
+using Streamflix.Api.Services;
 
 public interface IAccountService
 {
@@ -17,16 +18,16 @@ public class AccountService : IAccountService
 {
     private readonly ApplicationDbContext _db;
     private readonly IPasswordHasherService _passwordHasher;
-    private readonly IJwtSerivce _jwtService;
+    private readonly IJwtService _IJwtService;
 
     public AccountService(
         ApplicationDbContext db,
         IPasswordHasherService passwordHasher,
-        IJwtSerivce jwtService)
+        IJwtService jwtService)
     {
         _db = db;
         _passwordHasher = passwordHasher;
-        _jwtService = jwtService;
+        _IJwtService = jwtService;
     }
 
     public async Task<Account> RegisterAsync(CreateAccountDto dto)
@@ -83,7 +84,7 @@ public class AccountService : IAccountService
         account.FailedLoginAttempts = 0;
 
         await _db.SaveChangesAsync();
-        return _jwtService.GenerateToken(account);
+        return _IJwtService.GenerateToken(account);
     }
 
     public async Task RequestPasswordResetAsync(RequestPasswordResetDto dto)

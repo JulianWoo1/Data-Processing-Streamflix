@@ -1,4 +1,4 @@
-namespace Streamflix.Infrastructure.Entities;
+using Streamflix.Infrastructure.Entities;
 
 public class Account
 {

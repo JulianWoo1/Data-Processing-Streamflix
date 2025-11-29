@@ -1,3 +1,5 @@
+/*
+
 namespace Streamflix.Infrastructure.Entities;
 
 public class Subscription
@@ -13,3 +15,5 @@ public class Subscription
     public bool IsTrailPeriod { get; set; }
     public DateTime TrailPeriodEnd { get; set; }
 }
+
+*/

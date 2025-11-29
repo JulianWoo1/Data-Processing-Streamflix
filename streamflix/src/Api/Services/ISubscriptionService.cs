@@ -1,3 +1,4 @@
+/*
 public interface ISubscriptionService
 {
     Task<Subscription?> GetSubscriptionAsync(int accountId);
@@ -79,3 +80,5 @@ public class SubscriptionService : ISubscriptionService
         return await _db.SubscriptionPlans.ToListAsync();
     }
 }
+
+*/

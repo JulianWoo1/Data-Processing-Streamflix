@@ -9,13 +9,12 @@ public abstract class Content
     public int AgeRating { get; set; }
     public string ImageURL { get; set; } = null!;
 
-    // Genre (many-to-one)
-    public int GenreId { get; set; }
-    public Genre Genre { get; set; } = null!;
+    // Genre
+    public string Genre { get; set; } = null!;
 
-    // ContentWarnings (many-to-many)
-    public List<ContentWarning> ContentWarnings { get; set; } = new();
+    // ContentWarnings
+    public List<string> ContentWarnings { get; set; } = new();
 
-    // List<Quality>
-    public List<Quality> AvailableQualities { get; set; } = new();
+    // AvailableQualities
+    public List<string> AvailableQualities { get; set; } = new();
 }

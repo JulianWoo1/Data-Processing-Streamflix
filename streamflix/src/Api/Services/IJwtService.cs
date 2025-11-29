@@ -1,14 +1,18 @@
+using Streamflix.Infrastructure.Entities;  
+using Streamflix.Api.Settings;            
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-public interface IJwtSerivce
+namespace Streamflix.Api.Services;
+
+public interface IJwtService
 {
     string GenerateToken(Account account);
 }
 
-public class JwtService : IJwtSerivce
+public class JwtService : IJwtService
 {
     private readonly JwtSettings _settings;
 
