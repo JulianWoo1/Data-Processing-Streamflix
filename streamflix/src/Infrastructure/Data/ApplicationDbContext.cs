@@ -17,6 +17,7 @@ public class ApplicationDbContext : DbContext
 
     // ADD THIS LINE
     public DbSet<Account> Accounts { get; set; }  // <-- required
+    public DbSet<Subscription> Subscriptions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

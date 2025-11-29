@@ -1,5 +1,3 @@
-/*
-
 namespace Streamflix.Infrastructure.Entities;
 
 public class Subscription
@@ -10,10 +8,8 @@ public class Subscription
     public string SubscriptionDescription { get; set; }
     public double BasePrice { get; set; }
     public DateTime StartDate { get; set; }
-    public DateTime EndTime { get; set; }
+    public DateTime EndDate { get; set; }
     public bool IsActive { get; set; }
-    public bool IsTrailPeriod { get; set; }
-    public DateTime TrailPeriodEnd { get; set; }
+    public bool IsTrialPeriod  { get; set; }
+    public DateTime? TrialPeriodEnd  { get; set; }
 }
-
-*/

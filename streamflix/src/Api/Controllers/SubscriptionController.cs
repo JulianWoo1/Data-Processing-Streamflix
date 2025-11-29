@@ -1,4 +1,3 @@
-/*
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Streamflix.Api.DTOs;
@@ -17,6 +16,16 @@ public class SubscriptionController : ControllerBase
     {
         _service = service;
     }
-}
 
-*/
+    [HttpGet("{accountId}")]
+    public async Task<ActionResult<Subscription>> GetSubscription(int accountId)
+    {
+        var subscription = await _service.GetSubscriptionAsync(accountId);
+        if(subscription == null)
+        {
+            return NotFound("Subscription not found");
+        }
+
+        return Ok(subscription);
+    }
+}
