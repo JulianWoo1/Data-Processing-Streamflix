@@ -15,13 +15,16 @@ public class ApplicationDbContext : DbContext
     public DbSet<Episode> Episodes { get; set; }
     public DbSet<Season> Seasons { get; set; }
 
+    // ADD THIS LINE
+    public DbSet<Account> Accounts { get; set; }  // <-- required
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         // Configure inheritance for Content
         modelBuilder.Entity<Content>()
-            .UseTphMappingStrategy(); // Table-per-Hierarchy is default, but good to be explicit or choose TPT if preferred.
+            .UseTphMappingStrategy();
 
         // Configure relationships
         

@@ -31,6 +31,32 @@ docker-compose up --build
 *   The database migrations will apply automatically on startup.
 *   Seed data (Genres, Qualities, Warnings) will be inserted automatically.
 
+### 3. Access the Database (pgAdmin)
+
+This project includes **pgAdmin** as a web-based PostgreSQL management tool, running in Docker.
+
+Once `docker-compose` is up:
+
+*   Open: `http://localhost:8080`
+*   Log in with (from `docker-compose.yml`):
+    *   Email: `admin@example.com`
+    *   Password: `admin`
+
+#### Register the database server in pgAdmin (first time only per machine)
+
+1. In pgAdmin, right-click **Servers** → **Register** → **Server…**
+2. **General** tab:
+    *   Name: `streamflix` (any name is fine)
+3. **Connection** tab:
+    *   Host name/address: `db`
+    *   Port: `5432`
+    *   Maintenance database: `streamflixdb`
+    *   Username: `postgres`
+    *   Password: `postgres`
+4. Click **Save**.
+
+You should now see the `streamflixdb` database under **Databases → streamflixdb → Schemas → public → Tables**.
+
 ### 3. Access the API
 
 Once the application is running, you can access the Swagger UI to test the endpoints:
@@ -49,7 +75,6 @@ Once the application is running, you can access the Swagger UI to test the endpo
 *   **`src/Infrastructure`**: Database and Domain logic.
     *   **`Entities`**: Database table definitions.
     *   **`Data`**: DbContext and Seeding logic.
-    *   **`Enums`**: Static values (GenreType, QualityType, etc.).
 
 ### How to Add New Entities
 
@@ -103,3 +128,18 @@ Create the endpoints to manage accounts.
 
 **"Connection Refused" when running locally (`dotnet run`)**
 *   If running outside Docker, you must change the connection string in `appsettings.Development.json` to `"Host=localhost"`.
+
+**Reset the database volume (DEV only – this wipes all data)**
+If migrations get into a bad state (e.g., errors about tables already existing), you can reset the Postgres data volume and let the app recreate the schema:
+
+```bash
+docker-compose down
+
+# Remove the Postgres data volume (this wipes the DB)
+docker volume rm streamflix_db_data
+
+# Recreate and start everything
+docker compose up --build -d
+```
+
+After this, the `db` container starts with a fresh empty database and the API will apply all EF Core migrations again on startup.

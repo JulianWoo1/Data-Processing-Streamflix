@@ -2,16 +2,17 @@ version: "3.9"
 
 services:
   api:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     container_name: streamflix_api
     ports:
-      - "5001:8080"
+      - "5001:5001"
     depends_on:
       - db
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5001
     env_file:
       - .env
 

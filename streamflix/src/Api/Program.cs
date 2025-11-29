@@ -1,39 +1,55 @@
 using Microsoft.EntityFrameworkCore;
-using Streamflix.Api.DTOs;
 using Streamflix.Infrastructure.Data;
-using Streamflix.Infrastructure.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Services
 builder.Services.AddControllers();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// Swagger (Docker-friendly)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    // Absolute URL ensures Swagger works inside Docker
+    c.SwaggerEndpoint("http://localhost:5001/swagger/v1/swagger.json", "Streamflix API V1");
+    c.RoutePrefix = string.Empty; // Serve Swagger at root
+});
 
-// Commented out because it was causing issues with some requests during development
-// app.UseHttpsRedirection();
-
+app.UseAuthorization();
 app.MapControllers();
 
+// Retry loop for database migration
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
-    context.Database.Migrate();
+
+    var retries = 10;
+    while (retries > 0)
+    {
+        try
+        {
+            context.Database.Migrate();
+            break;
+        }
+        catch
+        {
+            retries--;
+            Console.WriteLine("Waiting for DB to be ready...");
+            System.Threading.Thread.Sleep(2000);
+        }
+    }
+
     DbSeeder.Seed(context);
 }
+
+// Listen on all interfaces for Docker
+app.Urls.Add("http://0.0.0.0:5001");
 
 app.Run();
