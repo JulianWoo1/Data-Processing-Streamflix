@@ -14,10 +14,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<Series> Series { get; set; }
     public DbSet<Episode> Episodes { get; set; }
     public DbSet<Season> Seasons { get; set; }
-
-    // ADD THIS LINE
-    public DbSet<Account> Accounts { get; set; }  // <-- required
+    public DbSet<Account> Accounts { get; set; } 
     public DbSet<Subscription> Subscriptions { get; set; }
+    public DbSet<Referral> Referrals {get; set;}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
