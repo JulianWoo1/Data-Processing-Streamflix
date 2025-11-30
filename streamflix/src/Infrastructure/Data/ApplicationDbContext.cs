@@ -15,6 +15,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<Episode> Episodes { get; set; }
     public DbSet<Season> Seasons { get; set; }
 
+    public DbSet<Profile> Profiles { get; set; }
+    public DbSet<ProfilePreference> ProfilePreferences { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -36,5 +39,11 @@ public class ApplicationDbContext : DbContext
             .HasOne(e => e.Season)
             .WithMany(s => s.Episodes)
             .HasForeignKey(e => e.SeasonId);
+
+         // Profile -> ProfilePreference (One-to-One)
+        modelBuilder.Entity<Profile>()
+            .HasOne(p => p.Preferences)
+            .WithOne(pp => pp.Profile)
+            .HasForeignKey<ProfilePreference>(pp => pp.ProfileId);
     }
 }

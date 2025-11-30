@@ -12,6 +12,12 @@ public static class DbSeeder
         {
             SeedMockData(context);
         }
+
+         // Seed profiles if none exist
+        if (!context.Profiles.Any())
+        {
+            SeedProfiles(context);
+        }
     }
 
     private static void SeedMockData(ApplicationDbContext context)
@@ -73,6 +79,48 @@ public static class DbSeeder
         context.Movies.AddRange(movie1, movie2);
         context.Series.Add(series);
 
+        context.SaveChanges();
+    }
+
+    private static void SeedProfiles(ApplicationDbContext context)
+    {
+        var profile1 = new Profile
+        {
+            AccountId = 1,
+            Name = "Alice",
+            AgeCategory = "Adult",
+            ImageUrl = "https://example.com/images/alice.jpg",
+            Preferences = new ProfilePreference
+            {
+                GenrePreference = "Action",
+                PrefersMovies = true,
+                PrefersSeries = false,
+                MinAgeAllowed = 12,
+                BlockViolence = true,
+                BlockFear = false,
+                BlockLanguage = true
+            }
+        };
+
+        var profile2 = new Profile
+        {
+            AccountId = 2,
+            Name = "Bob",
+            AgeCategory = "Teen",
+            ImageUrl = "https://example.com/images/bob.jpg",
+           Preferences = new ProfilePreference
+        {
+            GenrePreference = "Mystery",
+            PrefersMovies = false,
+            PrefersSeries = true,
+            MinAgeAllowed = 16,
+            BlockViolence = true,
+            BlockFear = false,
+            BlockLanguage = true
+        }
+        };
+
+        context.Profiles.AddRange(profile1, profile2);
         context.SaveChanges();
     }
 }
