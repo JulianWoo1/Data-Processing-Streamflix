@@ -1,3 +1,5 @@
+namespace Streamflix.Infrastructure.Entities;
+
 public class ProfilePreference
 {
     public int ProfilePreferenceId { get; set; }
