@@ -9,11 +9,17 @@ public class ApplicationDbContext : DbContext
     {
     }
 
+    // DbSets for entities \\
+    // Content
     public DbSet<Content> Contents { get; set; }
     public DbSet<Movie> Movies { get; set; }
     public DbSet<Series> Series { get; set; }
     public DbSet<Episode> Episodes { get; set; }
     public DbSet<Season> Seasons { get; set; }
+
+    // Watchlist
+    public DbSet<Watchlist> Watchlists { get; set; }
+    public DbSet<WatchlistContent> WatchlistContents { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,7 +30,7 @@ public class ApplicationDbContext : DbContext
             .UseTphMappingStrategy(); // Table-per-Hierarchy is default, but good to be explicit or choose TPT if preferred.
 
         // Configure relationships
-        
+
         // Series -> Season (One-to-Many)
         modelBuilder.Entity<Season>()
             .HasOne(s => s.Series)
@@ -36,5 +42,17 @@ public class ApplicationDbContext : DbContext
             .HasOne(e => e.Season)
             .WithMany(s => s.Episodes)
             .HasForeignKey(e => e.SeasonId);
+
+        // Watchlist -> WatchlistContent (One-to-Many)
+        modelBuilder.Entity<WatchlistContent>()
+            .HasOne(wc => wc.Watchlist)
+            .WithMany(w => w.Items)
+            .HasForeignKey(wc => wc.WatchlistId);
+
+        // Content -> WatchlistContent (One-to-Many)
+        modelBuilder.Entity<WatchlistContent>()
+            .HasOne(wc => wc.Content)
+            .WithMany()
+            .HasForeignKey(wc => wc.ContentId);
     }
 }

@@ -96,7 +96,7 @@ Tell Entity Framework that this new class should be a table in the database.
 **Where:** Terminal
 Generate the code that will actually update your PostgreSQL database schema.
 ```bash
-dotnet ef migrations add AddAccountEntity --project Infrastructure --startup-project Api
+dotnet ef migrations add AddAccountEntities --project src/Infrastructure/Infrastructure.csproj --startup-project src/Api/Api.csproj
 ```
 *   This creates a new file in `Migrations` describing the changes.
 *   *Note: Since auto-migration is set up in `Program.cs`, this will apply automatically next time you restart the app.*

@@ -25,7 +25,7 @@ public class ContentController : ControllerBase
         var movies = await _db.Movies
             .ToListAsync();
 
-        return Ok(movies.Select(ToDto));
+        return Ok(movies.Select(ToMovieDto));
     }
 
     // Get movie by ID
@@ -40,7 +40,7 @@ public class ContentController : ControllerBase
             return NotFound();
         }
 
-        return Ok(ToDto(movie));
+        return Ok(ToMovieDto(movie));
     }
 
     // Get movie by Title
@@ -56,7 +56,7 @@ public class ContentController : ControllerBase
             return NotFound();
         }
 
-        return Ok(ToDto(movie));
+        return Ok(ToMovieDto(movie));
     }
 
     // Get movies by Genre
@@ -68,7 +68,7 @@ public class ContentController : ControllerBase
             .Where(m => m.Genre.ToLower() == normalizedGenre)
             .ToListAsync();
 
-        return Ok(movies.Select(ToDto));
+        return Ok(movies.Select(ToMovieDto));
     }
 
     // Create a new movie
@@ -90,7 +90,7 @@ public class ContentController : ControllerBase
         _db.Movies.Add(movie);
         await _db.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetMovie), new { id = movie.ContentId }, ToDto(movie));
+        return CreatedAtAction(nameof(GetMovie), new { id = movie.ContentId }, ToMovieDto(movie));
     }
 
     // Series Endpoints\\
@@ -177,8 +177,9 @@ public class ContentController : ControllerBase
         return CreatedAtAction(nameof(GetSeries), new { id = series.ContentId }, ToSeriesSummaryDto(series));
     }
 
+    // TODO: Potentially switch to AutoMapper
     //Helper Methods\\
-    private static MovieDto ToDto(Movie m) =>
+    private static MovieDto ToMovieDto(Movie m) =>
         new MovieDto(
             m.ContentId,
             m.Title,
