@@ -308,27 +308,28 @@ namespace Infrastructure.Migrations
                     b.Navigation("Content");
 
                     b.Navigation("Watchlist");
+                });
 
-                    modelBuilder.Entity("Streamflix.Infrastructure.Entities.Profile", b =>
-                        {
-                            b.Navigation("Preferences");
-                        });
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Profile", b =>
+                {
+                    b.Navigation("Preferences");
+                });
 
-                    modelBuilder.Entity("Streamflix.Infrastructure.Entities.Season", b =>
-                        {
-                            b.Navigation("Episodes");
-                        });
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Season", b =>
+                {
+                    b.Navigation("Episodes");
+                });
 
-                    modelBuilder.Entity("Streamflix.Infrastructure.Entities.Watchlist", b =>
-                        {
-                            b.Navigation("Items");
-                        });
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Watchlist", b =>
+                {
+                    b.Navigation("Items");
+                });
 
-                    modelBuilder.Entity("Streamflix.Infrastructure.Entities.Series", b =>
-                        {
-                            b.Navigation("Seasons");
-                        });
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Series", b =>
+                {
+                    b.Navigation("Seasons");
+                });
 #pragma warning restore 612, 618
-                }
+        }
     }
-    }
+}

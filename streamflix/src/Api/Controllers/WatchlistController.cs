@@ -17,15 +17,16 @@ public class WatchlistController : ControllerBase
         _db = db;
     }
 
-    //Watchlist Endpoints\\
+    // Watchlist Endpoints\\
+
     // Get watchlist by Profile ID
     [HttpGet("profile/{profileId}")]
-    public async Task<ActionResult<IEnumerable<WatchlistDto>>> GetWatchlistByProfileId(int profileId)
+    public async Task<ActionResult<WatchlistDto>> GetWatchlistByProfileId(int profileId)
     {
-        var watchlist = _db.Watchlists
+        var watchlist = await _db.Watchlists
             .Include(w => w.Items)
-            .ThenInclude(wc => wc.Content)
-            .FirstOrDefault(w => w.ProfileId == profileId);
+                .ThenInclude(wc => wc.Content)
+            .FirstOrDefaultAsync(w => w.ProfileId == profileId);
 
         if (watchlist == null)
         {
@@ -35,17 +36,38 @@ public class WatchlistController : ControllerBase
         return Ok(ToWatchlistDto(watchlist));
     }
 
-    // Add content to watchlist
+    // Add content to watchlist (auto-creates watchlist if needed)
     [HttpPost("profile/{profileId}/add/{contentId}")]
-    public async Task<ActionResult> AddContentToWatchlist(int profileId, int contentId)
+    public async Task<ActionResult<WatchlistDto>> AddContentToWatchlist(int profileId, int contentId)
     {
-        var watchlist = _db.Watchlists
-            .Include(w => w.Items)
-            .FirstOrDefault(w => w.ProfileId == profileId);
+        // Optional but safer: ensure profile exists
+        var profileExists = await _db.Profiles.AnyAsync(p => p.ProfileId == profileId);
+        if (!profileExists)
+        {
+            return NotFound("Profile not found.");
+        }
 
+        // Optional: ensure content exists
+        var contentExists = await _db.Contents.AnyAsync(c => c.ContentId == contentId);
+        if (!contentExists)
+        {
+            return NotFound("Content not found.");
+        }
+
+        var watchlist = await _db.Watchlists
+            .Include(w => w.Items)
+            .FirstOrDefaultAsync(w => w.ProfileId == profileId);
+
+        // Auto-create watchlist if it doesn't exist yet
         if (watchlist == null)
         {
-            return NotFound("Watchlist not found for the given profile ID.");
+            watchlist = new Watchlist
+            {
+                ProfileId = profileId,
+                CreatedAt = DateTime.UtcNow,
+                Items = new List<WatchlistContent>()
+            };
+            _db.Watchlists.Add(watchlist);
         }
 
         if (watchlist.Items.Any(wc => wc.ContentId == contentId))
@@ -53,17 +75,21 @@ public class WatchlistController : ControllerBase
             return BadRequest("Content already exists in the watchlist.");
         }
 
-        var newWatchlistContent = new WatchlistContent
+        watchlist.Items.Add(new WatchlistContent
         {
-            WatchlistId = watchlist.WatchlistId,
             ContentId = contentId,
             DateAdded = DateTime.UtcNow
-        };
+        });
 
-        watchlist.Items.Add(newWatchlistContent);
         await _db.SaveChangesAsync();
 
-        return Ok("Content added to watchlist.");
+        // Reload including Content so DTO has full info
+        watchlist = await _db.Watchlists
+            .Include(w => w.Items)
+                .ThenInclude(wc => wc.Content)
+            .FirstAsync(w => w.WatchlistId == watchlist.WatchlistId);
+
+        return Ok(ToWatchlistDto(watchlist));
     }
 
     // Remove content from watchlist
@@ -71,10 +97,10 @@ public class WatchlistController : ControllerBase
     public async Task<ActionResult> RemoveFromWatchListByContent(int profileId, int contentId)
     {
         var item = await _db.WatchlistContents
-               .Include(wc => wc.Watchlist)
-               .FirstOrDefaultAsync(wc =>
-                   wc.Watchlist.ProfileId == profileId &&
-                   wc.ContentId == contentId);
+            .Include(wc => wc.Watchlist)
+            .FirstOrDefaultAsync(wc =>
+                wc.Watchlist.ProfileId == profileId &&
+                wc.ContentId == contentId);
 
         if (item == null)
         {
@@ -87,8 +113,8 @@ public class WatchlistController : ControllerBase
         return NoContent();
     }
 
+    // Helper Methods\\
 
-    //Helper Methods\\
     // Convert Watchlist entity to WatchlistDto
     private static WatchlistDto ToWatchlistDto(Watchlist watchlist) =>
         new WatchlistDto(
@@ -108,5 +134,4 @@ public class WatchlistController : ControllerBase
                 wc.DateAdded
             )).ToList()
         );
-
 }
