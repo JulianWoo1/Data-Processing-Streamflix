@@ -22,7 +22,7 @@ public class ProfileController : ControllerBase
     public async Task<ActionResult<IEnumerable<ProfileDto>>> GetProfiles()
     {
         var profiles = await _db.Profiles
-            .Include(p => p.Preferences)
+            .Include(p => p.Preference)
             .ToListAsync();
 
         return Ok(profiles.Select(ToDto));
@@ -33,7 +33,7 @@ public class ProfileController : ControllerBase
     public async Task<ActionResult<ProfileDto>> GetProfile(int id)
     {
         var profile = await _db.Profiles
-            .Include(p => p.Preferences)
+            .Include(p => p.Preference)
             .FirstOrDefaultAsync(p => p.ProfileId == id);
 
         if (profile == null) return NotFound();
@@ -85,29 +85,26 @@ public class ProfileController : ControllerBase
         return NoContent();
     }
 
-    // PUT update profile preferences
-    [HttpPut("{id}/preferences")]
-    public async Task<IActionResult> UpdatePreferences(int id, UpdateProfilePreferenceDto request)
+    // PUT update profile preference
+    [HttpPut("{id}/preference")]
+    public async Task<IActionResult> UpdatePreference(int id, UpdateProfilePreferenceDto request)
     {
         var profile = await _db.Profiles
-            .Include(p => p.Preferences)
+            .Include(p => p.Preference)
             .FirstOrDefaultAsync(p => p.ProfileId == id);
 
         if (profile == null) return NotFound();
 
-        if (profile.Preferences == null)
+        if (profile.Preference == null)
         {
-            profile.Preferences = new ProfilePreference { ProfileId = id };
-            _db.ProfilePreferences.Add(profile.Preferences);
+            profile.Preference = new ProfilePreference { ProfileId = id };
+            _db.ProfilePreference.Add(profile.Preference);
         }
 
-        profile.Preferences.GenrePreference = request.GenrePreference;
-        profile.Preferences.PrefersMovies = request.PrefersMovies;
-        profile.Preferences.PrefersSeries = request.PrefersSeries;
-        profile.Preferences.MinAgeAllowed = request.MinAgeAllowed;
-        profile.Preferences.BlockViolence = request.BlockViolence;
-        profile.Preferences.BlockFear = request.BlockFear;
-        profile.Preferences.BlockLanguage = request.BlockLanguage;
+        profile.Preference.PreferredGenres = request.PreferredGenres;
+        profile.Preference.ContentType = request.ContentType;
+        profile.Preference.MinimumAge = request.MinimumAge;
+        profile.Preference.ContentFilters = request.ContentFilters;
 
         await _db.SaveChangesAsync();
         return NoContent();
@@ -121,14 +118,11 @@ public class ProfileController : ControllerBase
             p.Name,
             p.AgeCategory,
             p.ImageUrl,
-            p.Preferences == null ? null : new ProfilePreferenceDto(
-                p.Preferences.GenrePreference,
-                p.Preferences.PrefersMovies,
-                p.Preferences.PrefersSeries,
-                p.Preferences.MinAgeAllowed,
-                p.Preferences.BlockViolence,
-                p.Preferences.BlockFear,
-                p.Preferences.BlockLanguage
+            p.Preference == null ? null : new ProfilePreferenceDto(
+                p.Preference.PreferredGenres,
+                p.Preference.ContentType,
+                p.Preference.MinimumAge,
+                p.Preference.ContentFilters
             )
         );
 }

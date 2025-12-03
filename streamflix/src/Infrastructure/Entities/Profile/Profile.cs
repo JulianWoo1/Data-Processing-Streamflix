@@ -10,5 +10,5 @@ public class Profile
     public string ImageUrl { get; set; } = null!;
 
     // Relatie met ProfilePreference (one-to-one)
-    public ProfilePreference? Preferences { get; set; }
+    public ProfilePreference? Preference { get; set; }
 }

@@ -13,7 +13,7 @@ public record ProfileDto(
     string Name,
     string AgeCategory,
     string ImageUrl,
-    ProfilePreferenceDto? Preferences
+    ProfilePreferenceDto? Preference
 );
 
 public record UpdateProfileDto(
