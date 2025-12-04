@@ -90,15 +90,12 @@ public static class DbSeeder
             Name = "Alice",
             AgeCategory = "Adult",
             ImageUrl = "https://example.com/images/alice.jpg",
-            Preferences = new ProfilePreference
+            Preference = new ProfilePreference
             {
-                GenrePreference = "Action",
-                PrefersMovies = true,
-                PrefersSeries = false,
-                MinAgeAllowed = 12,
-                BlockViolence = true,
-                BlockFear = false,
-                BlockLanguage = true
+                PreferredGenres = new List<string> { "Action" },
+                ContentType = "Movie",
+                MinimumAge = 12,
+                ContentFilters = new List<string> { "Violence", "Strong language" }
             }
         };
 
@@ -108,16 +105,13 @@ public static class DbSeeder
             Name = "Bob",
             AgeCategory = "Teen",
             ImageUrl = "https://example.com/images/bob.jpg",
-           Preferences = new ProfilePreference
-        {
-            GenrePreference = "Mystery",
-            PrefersMovies = false,
-            PrefersSeries = true,
-            MinAgeAllowed = 16,
-            BlockViolence = true,
-            BlockFear = false,
-            BlockLanguage = true
-        }
+            Preference = new ProfilePreference
+            {
+                PreferredGenres = new List<string> { "Mystery" },
+                ContentType = "Series",
+                MinimumAge = 16,
+                ContentFilters = new List<string> { "Violence" }
+            }
         };
 
         context.Profiles.AddRange(profile1, profile2);

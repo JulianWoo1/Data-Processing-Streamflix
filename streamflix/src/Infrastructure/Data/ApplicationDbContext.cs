@@ -60,7 +60,7 @@ public class ApplicationDbContext : DbContext
 
         // Profile -> ProfilePreference (One-to-One)
         modelBuilder.Entity<Profile>()
-            .HasOne(p => p.Preferences)
+            .HasOne(p => p.Preference)
             .WithOne(pp => pp.Profile)
             .HasForeignKey<ProfilePreference>(pp => pp.ProfileId);
     }
