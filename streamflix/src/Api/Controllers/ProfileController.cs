@@ -29,7 +29,7 @@ public class ProfileController : ControllerBase
     }
 
     // GET profile by id
-     [HttpGet("{id}")]
+    [HttpGet("{id}")]
     public async Task<ActionResult<ProfileDto>> GetProfile(int id)
     {
         var profile = await _db.Profiles
@@ -98,7 +98,7 @@ public class ProfileController : ControllerBase
         if (profile.Preference == null)
         {
             profile.Preference = new ProfilePreference { ProfileId = id };
-            _db.ProfilePreference.Add(profile.Preference);
+            _db.ProfilePreferences.Add(profile.Preference);
         }
 
         profile.Preference.PreferredGenres = request.PreferredGenres;

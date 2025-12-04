@@ -13,8 +13,8 @@ using Streamflix.Infrastructure.Data;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251202203120_AddWatchlistEntities")]
-    partial class AddWatchlistEntities
+    [Migration("20251204194137_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -101,6 +101,68 @@ namespace Infrastructure.Migrations
                     b.HasIndex("SeasonId");
 
                     b.ToTable("Episodes");
+                });
+
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Profile", b =>
+                {
+                    b.Property<int>("ProfileId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ProfileId"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("AgeCategory")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("ProfileId");
+
+                    b.ToTable("Profiles");
+                });
+
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.ProfilePreference", b =>
+                {
+                    b.Property<int>("ProfilePreferenceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ProfilePreferenceId"));
+
+                    b.PrimitiveCollection<List<string>>("ContentFilters")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("MinimumAge")
+                        .HasColumnType("integer");
+
+                    b.PrimitiveCollection<List<string>>("PreferredGenres")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<int>("ProfileId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ProfilePreferenceId");
+
+                    b.HasIndex("ProfileId")
+                        .IsUnique();
+
+                    b.ToTable("ProfilePreferences");
                 });
 
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Season", b =>
@@ -203,6 +265,17 @@ namespace Infrastructure.Migrations
                     b.Navigation("Season");
                 });
 
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.ProfilePreference", b =>
+                {
+                    b.HasOne("Streamflix.Infrastructure.Entities.Profile", "Profile")
+                        .WithOne("Preference")
+                        .HasForeignKey("Streamflix.Infrastructure.Entities.ProfilePreference", "ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Profile");
+                });
+
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Season", b =>
                 {
                     b.HasOne("Streamflix.Infrastructure.Entities.Series", "Series")
@@ -231,6 +304,11 @@ namespace Infrastructure.Migrations
                     b.Navigation("Content");
 
                     b.Navigation("Watchlist");
+                });
+
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Profile", b =>
+                {
+                    b.Navigation("Preference");
                 });
 
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Season", b =>
