@@ -63,5 +63,12 @@ public class ApplicationDbContext : DbContext
             .HasOne(p => p.Preference)
             .WithOne(pp => pp.Profile)
             .HasForeignKey<ProfilePreference>(pp => pp.ProfileId);
+
+        // Profile -> Watchlist (One-to-Many)
+        modelBuilder.Entity<Watchlist>()
+            .HasOne(w => w.Profile)
+            .WithMany(p => p.Watchlists)
+            .HasForeignKey(w => w.ProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

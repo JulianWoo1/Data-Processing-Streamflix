@@ -11,4 +11,7 @@ public class Profile
 
     // Relatie met ProfilePreference (one-to-one)
     public ProfilePreference? Preference { get; set; }
+
+    // One Profile has many Watchlists
+    public List<Watchlist> Watchlists { get; set; } = new();
 }

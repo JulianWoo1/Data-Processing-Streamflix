@@ -28,12 +28,40 @@ if (app.Environment.IsDevelopment())
 
 app.MapControllers();
 
+// Wait for DB to be ready, then migrate + seed
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
     var context = services.GetRequiredService<ApplicationDbContext>();
-    context.Database.Migrate();
-    DbSeeder.Seed(context);
+
+    const int maxRetries = 10;
+    const int delayMs = 2000;
+
+    for (var attempt = 1; attempt <= maxRetries; attempt++)
+    {
+        try
+        {
+            logger.LogInformation("Attempt {Attempt}/{MaxRetries}: Applying migrations...", attempt, maxRetries);
+            context.Database.Migrate();
+            logger.LogInformation("Migrations applied. Seeding database...");
+            DbSeeder.Seed(context);
+            logger.LogInformation("Database seeding completed.");
+            break;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error while migrating/seeding the database on attempt {Attempt}.", attempt);
+
+            if (attempt == maxRetries)
+            {
+                logger.LogCritical("Max retries reached. Giving up on database migration/seeding.");
+                throw;
+            }
+
+            Thread.Sleep(delayMs);
+        }
+    }
 }
 
 app.Run();
