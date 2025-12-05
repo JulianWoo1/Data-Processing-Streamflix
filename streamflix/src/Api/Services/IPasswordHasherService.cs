@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Identity;
+using Streamflix.Infrastructure.Entities;
+using Microsoft.AspNetCore.Identity;
 
 public interface IPasswordHasherService
 {
@@ -12,12 +14,15 @@ public class PasswordHasherService : IPasswordHasherService
 
     public string HashPassword(string password)
     {
-        return _hasher.HashPassword(null!, password);
+        var user = new Account();
+        return _hasher.HashPassword(user, password);
     }
 
     public bool VerifyPassword(string hashedPassword, string providedPassword)
     {
-        var result = _hasher.VerifyHashedPassword(null!, hashedPassword, providedPassword);
+        var user = new Account();
+        var result = _hasher.VerifyHashedPassword(user, hashedPassword, providedPassword);
         return result == PasswordVerificationResult.Success;
     }
 }
+

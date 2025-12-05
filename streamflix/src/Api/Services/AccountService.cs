@@ -6,10 +6,10 @@ using Streamflix.Api.Services;
 
 public interface IAccountService
 {
-    Task<Account> RegisterAsync(CreateAccountDto dto);
+    Task<(Account account, string verificationToken)> RegisterAsync(CreateAccountDto dto);
     Task<bool> VerifyAsync(VerifyAccountDto dto);
-    Task<string?> LoginAsync(LoginDto dto);
-    Task RequestPasswordResetAsync(RequestPasswordResetDto dto);
+    Task<LoginResult> LoginAsync(LoginDto dto);
+    Task<string?> RequestPasswordResetAsync(RequestPasswordResetDto dto);
     Task<bool> ResetPasswordAsync(ResetPasswordDto dto);
     Task<Account?> GetAccountInfoAsync(string email);
 }
@@ -30,16 +30,22 @@ public class AccountService : IAccountService
         _IJwtService = jwtService;
     }
 
-    public async Task<Account> RegisterAsync(CreateAccountDto dto)
+    public async Task<(Account account, string verificationToken)> RegisterAsync(CreateAccountDto dto)
     {
-        if (await _db.Accounts.AnyAsync(a => a.Email == dto.Email))
-            throw new InvalidOperationException("Email already in use");
+        var normalizedEmail = dto.Email.ToLowerInvariant();
+        
+        if (await _db.Accounts.AnyAsync(a => a.Email.ToLower() == normalizedEmail))
+        {
+            throw new InvalidOperationException("Email already in use");   
+        }
 
+        var verificationToken = Guid.NewGuid().ToString();
+        
         var account = new Account
         {
-            Email = dto.Email,
+            Email = normalizedEmail,
             Password = _passwordHasher.HashPassword(dto.Password),
-            VerificationToken = Guid.NewGuid().ToString(),
+            VerificationToken = verificationToken,
             TokenExpire = DateTime.UtcNow.AddHours(24),
             RegistrationDate = DateTime.UtcNow,
             IsActive = true,
@@ -48,20 +54,23 @@ public class AccountService : IAccountService
 
         _db.Accounts.Add(account);
         await _db.SaveChangesAsync();
-        return account;
+        return (account, verificationToken);
     }
 
     public async Task<bool> VerifyAsync(VerifyAccountDto dto)
     {
-        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == dto.Email);
+        var normalizedEmail = dto.Email.ToLowerInvariant();
+        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email.ToLower() == normalizedEmail);
+
         if (account == null || account.IsVerified)
-            return false;
+        {
+            return false;            
+        }
 
-        if (account.VerificationToken != dto.VerificationToken)
+        if (account.VerificationToken != dto.VerificationToken || account.TokenExpire == null || account.TokenExpire < DateTime.UtcNow)
+        {
             return false;
-
-        if (account.TokenExpire == null || account.TokenExpire < DateTime.UtcNow)
-            return false;
+        }
 
         account.IsVerified = true;
         account.VerificationToken = null;
@@ -71,43 +80,87 @@ public class AccountService : IAccountService
         return true;
     }
 
-    public async Task<string?> LoginAsync(LoginDto dto)
+    public async Task<LoginResult> LoginAsync(LoginDto dto)
     {
-        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == dto.Email);
-        if (account == null || !account.IsVerified)
-            return null;
+        var normalizedEmail = dto.Email.ToLowerInvariant();
+        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email.ToLower() == normalizedEmail);
+
+        if (account == null)
+        {
+            return new LoginResult(false, null, "Invalid credentials.");
+        }
+
+        if (!account.IsVerified)
+        {
+            return new LoginResult(false, null, "Account not verified. Please verify your email.");   
+        }
+
+        if (account.BlockedUntil > DateTime.UtcNow)
+        {
+            var minutesLeft = (int)(account.BlockedUntil - DateTime.UtcNow).TotalMinutes;
+            return new LoginResult(false, null, $"Account temporarily locked. Try again in {minutesLeft} minutes.");
+        }
 
         if (!_passwordHasher.VerifyPassword(account.Password, dto.Password))
-            return null;
+        {
+            account.FailedLoginAttempts++;
 
-        account.LastLogin = DateTime.UtcNow;
+            const int maxAttempts = 3;
+            const int blockMinutes = 60;
+
+            if (account.FailedLoginAttempts >= maxAttempts)
+            {
+                account.BlockedUntil = DateTime.UtcNow.AddMinutes(blockMinutes);
+                account.FailedLoginAttempts = 0;
+            }
+
+            await _db.SaveChangesAsync();
+            return new LoginResult(false, null, "Invalid credentials.");
+        }
+
         account.FailedLoginAttempts = 0;
+        account.BlockedUntil = DateTime.MinValue;
+        account.LastLogin = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        return _IJwtService.GenerateToken(account);
+
+        var token = _IJwtService.GenerateToken(account);
+        return new LoginResult(true, token, null);
     }
 
-    public async Task RequestPasswordResetAsync(RequestPasswordResetDto dto)
+    
+    public async Task<string?> RequestPasswordResetAsync(RequestPasswordResetDto dto)
     {
-        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == dto.Email);
-        if (account == null) return;
+        var normalizedEmail = dto.Email.ToLowerInvariant();
+        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email.ToLower() == normalizedEmail);
 
-        account.PasswordResetToken = Guid.NewGuid().ToString();
+        if (account == null)
+        {
+            return null;  
+        } 
+        var resetToken = Guid.NewGuid().ToString();
+        account.PasswordResetToken = resetToken;
         account.TokenExpire = DateTime.UtcNow.AddHours(1);
 
         await _db.SaveChangesAsync();
+        return resetToken;
     }
 
     public async Task<bool> ResetPasswordAsync(ResetPasswordDto dto)
     {
-        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email == dto.Email);
-        if (account == null) return false;
+        var normalizedEmail = dto.Email.ToLowerInvariant();
+        var account = await _db.Accounts.FirstOrDefaultAsync(a => a.Email.ToLower() == normalizedEmail);
 
-        if (account.PasswordResetToken != dto.PasswordResetToken)
-            return false;
+        if (account == null)
+        {
+            return false;  
+        } 
 
-        if (account.TokenExpire == null || account.TokenExpire < DateTime.UtcNow)
-            return false;
+        if (account.PasswordResetToken != dto.PasswordResetToken ||
+            account.TokenExpire == null || account.TokenExpire < DateTime.UtcNow)
+        {
+            return false; 
+        }
 
         account.Password = _passwordHasher.HashPassword(dto.NewPassword);
         account.PasswordResetToken = null;
@@ -117,8 +170,10 @@ public class AccountService : IAccountService
         return true;
     }
 
+
     public async Task<Account?> GetAccountInfoAsync(string email)
     {
-        return await _db.Accounts.FirstOrDefaultAsync(a => a.Email == email);
+        var normalizedEmail = email.ToLowerInvariant();
+        return await _db.Accounts.FirstOrDefaultAsync(a => a.Email.ToLower() == normalizedEmail);
     }
 }

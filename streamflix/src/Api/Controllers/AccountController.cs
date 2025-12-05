@@ -1,8 +1,6 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Streamflix.Api.DTOs;
-using Streamflix.Infrastructure.Data;
-using Streamflix.Infrastructure.Entities;
 
 namespace Streamflix.Api.Controllers;
 
@@ -11,19 +9,40 @@ namespace Streamflix.Api.Controllers;
 public class AccountController : ControllerBase
 {
     private readonly IAccountService _accountService;
+    private readonly IWebHostEnvironment _hostEnvironment;
 
-    public AccountController(IAccountService accountService)
+    public AccountController(IAccountService accountService, IWebHostEnvironment hostEnvironment)
     {
         _accountService = accountService;
+        _hostEnvironment = hostEnvironment;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] CreateAccountDto dto)
     {
+        if(!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+        if (!new EmailAddressAttribute().IsValid(dto.Email))
+        {
+            return BadRequest(new { Message = "Invalid email format." });
+        }
         try
         {
-            var account = await _accountService.RegisterAsync(dto);
-            return Ok(new { account.AccountId, account.Email });
+            var result = await _accountService.RegisterAsync(dto);
+            
+            if (_hostEnvironment.IsDevelopment())
+            {
+                return Ok(new 
+                { 
+                    result.account.AccountId, 
+                    result.account.Email,
+                    VerificationToken = result.verificationToken
+                });
+            }
+            
+            return Ok(new { result.account.AccountId, result.account.Email });
         }
         catch (InvalidOperationException ex)
         {
@@ -41,15 +60,24 @@ public class AccountController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        var token = await _accountService.LoginAsync(dto);
-        return token == null ? Unauthorized("Invalid credentials.") : Ok(new { Token = token });
+        var result = await _accountService.LoginAsync(dto);
+        return result.Success 
+            ? Ok(new { Token = result.Token }) 
+            : Unauthorized(result.ErrorMessage);
     }
 
     [HttpPost("requestPasswordReset")]
     public async Task<IActionResult> RequestPasswordReset([FromBody] RequestPasswordResetDto dto)
     {
-        await _accountService.RequestPasswordResetAsync(dto);
-        return Ok("If an account exists, a reset link was sent.");
+        var resetToken = await _accountService.RequestPasswordResetAsync(dto);
+
+        return Ok(new 
+        { 
+            Message = resetToken != null 
+                ? "Password reset token generated successfully." 
+                : "If an account exists, a reset link was sent.",
+            PasswordResetToken = resetToken
+        });
     }
 
     [HttpPost("resetPassword")]
@@ -63,7 +91,10 @@ public class AccountController : ControllerBase
     public async Task<IActionResult> GetAccountInfo([FromQuery] string email)
     {
         var account = await _accountService.GetAccountInfoAsync(email);
-        if (account == null) return NotFound();
+        if (account == null)
+        {
+            return NotFound();  
+        } 
 
         return Ok(new
         {
