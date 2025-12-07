@@ -13,8 +13,8 @@ using Streamflix.Infrastructure.Data;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251205085956_AddAccountEntities")]
-    partial class AddAccountEntities
+    [Migration("20251207145333_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -123,6 +123,34 @@ namespace Infrastructure.Migrations
                     b.UseTphMappingStrategy();
                 });
 
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Discount", b =>
+                {
+                    b.Property<int>("DiscountId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("DiscountId"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("DiscountAmount")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("DiscountId");
+
+                    b.ToTable("Discounts");
+                });
+
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Episode", b =>
                 {
                     b.Property<int>("EpisodeId")
@@ -159,30 +187,33 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ReferralId"));
 
-                    b.Property<double>("BasePrice")
-                        .HasColumnType("double precision");
+                    b.Property<DateTime?>("AcceptDate")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("EndDate")
+                    b.Property<DateTime?>("DiscountEndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DiscountStartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InvitationCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("InvitationDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsTrialPeriod")
+                    b.Property<bool>("IsDiscountApplied")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("TrialPeriodEnd")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("accountId")
+                    b.Property<int?>("ReferredAccountId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("subscriptionType")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("ReferrerAccountId")
+                        .HasColumnType("integer");
 
                     b.HasKey("ReferralId");
 
