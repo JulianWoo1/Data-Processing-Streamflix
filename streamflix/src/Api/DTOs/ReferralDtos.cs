@@ -1,25 +1,10 @@
 namespace Streamflix.Api.DTOs;
 
 public record CreateInvitationDto(
-    int ReferralId,
-    int accountId,
-    string subscriptionType, 
-    double BasePrice,
-    DateTime StartDate,
-    DateTime EndDate, 
-    bool IsActive, 
-    bool IsTrialPeriod, 
-    DateTime TrialPeriodEnd 
+    int ReferrerAccountId
 );
 
-public record AcceptInvitation(
-    int ReferralId  
-);
-
-public record GetReferralStatus(
-
-);
-
-public record GetDiscount(
-
+public record AcceptInvitationDto(
+    string InvitationCode,
+    int ReferredAccountId
 );

@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Streamflix.Api.DTOs;
-using Streamflix.Infrastructure.Data;
 using Streamflix.Infrastructure.Entities;
 
 namespace Streamflix.Api.Controllers;
@@ -21,9 +19,9 @@ public class SubscriptionController : ControllerBase
     public async Task<ActionResult<Subscription>> GetSubscription(int accountId)
     {
         var subscription = await _service.GetSubscriptionAsync(accountId);
-        if(subscription == null)
+        if (subscription == null)
         {
-            return NotFound("Subscription not found");
+            return NotFound("Subscription not found");            
         }
 
         return Ok(subscription);
@@ -33,21 +31,27 @@ public class SubscriptionController : ControllerBase
     public async Task<ActionResult<Subscription>> CreateSubscription([FromBody] CreateSubscriptionDto dto)
     {
         var sub = await _service.CreateSubscriptionAsync(dto);
+
         return CreatedAtAction(nameof(GetSubscription), new 
         {
-             accountId = sub.AccountId 
+            accountId = sub.AccountId
         }, sub);
     }
 
     [HttpPut("{subscriptionId}")]
-    public async Task<ActionResult<Subscription?>> UpgradeSubscription(int subscriptionId, [FromBody] ChangeSubscriptionDto dto)
+    public async Task<ActionResult<Subscription?>> ChangeSubscription(int subscriptionId, [FromBody] ChangeSubscriptionDto dto)
     {
         if (subscriptionId != dto.SubscriptionId)
-            return BadRequest("SubscriptionId mismatch");
+        {
+            return BadRequest("SubscriptionId mismatch");            
+        }
 
         var updated = await _service.ChangeSubscriptionAsync(dto);
+
         if (updated == null)
-            return NotFound("Subscription not found or inactive");
+        {
+            return NotFound("Subscription not found or inactive");            
+        }
 
         return Ok(updated);
     }
@@ -56,24 +60,34 @@ public class SubscriptionController : ControllerBase
     public async Task<ActionResult> CancelSubscription(int subscriptionId)
     {
         var success = await _service.CancelSubscriptionAsync(subscriptionId);
-        if(!success)
+        if (!success)
         {
-            return NotFound("subscription not found");
+            return NotFound("Subscription not found");            
         }
 
         return NoContent();
     }
 
-    [HttpGet("plans")]
-    public ActionResult<IEnumerable<string>> GetAvailablePlans()
+    [HttpPost("renew/{subscriptionId}")]
+    public async Task<ActionResult<Subscription?>> RenewSubscription(int subscriptionId)
     {
-        var plans = new []
+        var renewed = await _service.RenewSubscriptionAsync(subscriptionId);
+        if (renewed == null)
         {
-            "SD",
-            "HD",
-            "UHD"
-        };
+            return NotFound();            
+        }
 
-        return Ok(plans);
+        return Ok(renewed);
+    }
+
+    [HttpGet("plans")]
+    public ActionResult<IEnumerable<object>> GetPlans()
+    {
+        return Ok(new[]
+        {
+            new { Type = "SD",  Price = 7.99 },
+            new { Type = "HD",  Price = 10.99 },
+            new { Type = "UHD", Price = 13.99 }
+        });
     }
 }

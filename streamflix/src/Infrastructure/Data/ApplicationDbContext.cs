@@ -10,34 +10,42 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<Content> Contents { get; set; }
-    public DbSet<Movie> Movies { get; set; }
+    public DbSet<Movie> Movies { get; set; }    
     public DbSet<Series> Series { get; set; }
     public DbSet<Episode> Episodes { get; set; }
     public DbSet<Season> Seasons { get; set; }
     public DbSet<Account> Accounts { get; set; } 
     public DbSet<Subscription> Subscriptions { get; set; }
-    public DbSet<Referral> Referrals {get; set;}
+    public DbSet<Referral> Referrals { get; set; }
+    public DbSet<Discount> Discounts { get; set; } 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure inheritance for Content
         modelBuilder.Entity<Content>()
             .UseTphMappingStrategy();
 
-        // Configure relationships
-        
+        // Relationships
+
         // Series -> Season (One-to-Many)
         modelBuilder.Entity<Season>()
             .HasOne(s => s.Series)
             .WithMany(ser => ser.Seasons)
-            .HasForeignKey(s => s.SeriesId);
+            .HasForeignKey(s => s.SeriesId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Season -> Episode (One-to-Many)
         modelBuilder.Entity<Episode>()
             .HasOne(e => e.Season)
             .WithMany(s => s.Episodes)
-            .HasForeignKey(e => e.SeasonId);
+            .HasForeignKey(e => e.SeasonId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Referral>()
+            .HasKey(r => r.ReferralId);
+
+        modelBuilder.Entity<Discount>()
+            .HasKey(d => d.DiscountId);
     }
 }

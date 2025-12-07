@@ -46,6 +46,7 @@ builder.Services
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<IReferralService, ReferralService>();
 
 var app = builder.Build();
 
