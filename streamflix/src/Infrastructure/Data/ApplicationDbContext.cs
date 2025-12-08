@@ -67,8 +67,6 @@ public class ApplicationDbContext : DbContext
             .HasOne(p => p.Preference)
             .WithOne(pp => pp.Profile)
             .HasForeignKey<ProfilePreference>(pp => pp.ProfileId);
-            .HasForeignKey(e => e.SeasonId)
-            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Referral>()
             .HasKey(r => r.ReferralId);
