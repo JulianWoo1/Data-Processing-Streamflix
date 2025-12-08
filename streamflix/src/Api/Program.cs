@@ -37,7 +37,7 @@ builder.Services
 
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwt["SecretKey"])
+                Encoding.UTF8.GetBytes(jwt["SecretKey"]!)
             ),
 
             ValidateLifetime = true
@@ -57,7 +57,6 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty;
 });
 
-// Commented out because it was causing issues with some requests during development
 // app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -68,7 +67,6 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
-    context.Database.Migrate();
 
     var retries = 10;
     while (retries > 0)
