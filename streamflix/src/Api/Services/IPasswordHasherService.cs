@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity;
 using Streamflix.Infrastructure.Entities;
-using Microsoft.AspNetCore.Identity;
 
 public interface IPasswordHasherService
 {
