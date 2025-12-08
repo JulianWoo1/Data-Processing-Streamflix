@@ -23,6 +23,8 @@ public class ProfileController : ControllerBase
     {
         var profiles = await _db.Profiles
             .Include(p => p.Preference)
+            .Include(p => p.Watchlist)
+            .Include(p => p.ViewingHistories)
             .ToListAsync();
 
         return Ok(profiles.Select(ToDto));
@@ -34,6 +36,8 @@ public class ProfileController : ControllerBase
     {
         var profile = await _db.Profiles
             .Include(p => p.Preference)
+            .Include(p => p.Watchlist)
+            .Include(p => p.ViewingHistories)
             .FirstOrDefaultAsync(p => p.ProfileId == id);
 
         if (profile == null) return NotFound();
@@ -98,7 +102,7 @@ public class ProfileController : ControllerBase
         if (profile.Preference == null)
         {
             profile.Preference = new ProfilePreference { ProfileId = id };
-            _db.ProfilePreference.Add(profile.Preference);
+            _db.ProfilePreferences.Add(profile.Preference);
         }
 
         profile.Preference.PreferredGenres = request.PreferredGenres;
@@ -123,6 +127,22 @@ public class ProfileController : ControllerBase
                 p.Preference.ContentType,
                 p.Preference.MinimumAge,
                 p.Preference.ContentFilters
-            )
+            ),
+            p.Watchlist == null ? null : new WatchlistDto(
+                p.Watchlist.WatchlistId,
+                p.Watchlist.ProfileId,
+                p.Watchlist.DateAdded
+            // Content mapping should be added here
+            ),
+            p.ViewingHistories.Select(v => new ViewingHistoryDto(
+                v.ViewingHistoryId,
+                v.ProfileId,
+                v.ContentId,
+                v.EpisodeId,
+                v.StartTime,
+                v.EndTime,
+                v.LastPosition,
+                v.IsCompleted
+            ))
         );
 }

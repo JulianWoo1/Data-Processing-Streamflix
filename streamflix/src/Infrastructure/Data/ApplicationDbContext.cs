@@ -17,6 +17,8 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<Profile> Profiles { get; set; }
     public DbSet<ProfilePreference> ProfilePreferences { get; set; }
+    public DbSet<ViewingHistory> ViewingHistories { get; set; }
+    public DbSet<Watchlist> Watchlists { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -45,5 +47,17 @@ public class ApplicationDbContext : DbContext
             .HasOne(p => p.Preference)
             .WithOne(pp => pp.Profile)
             .HasForeignKey<ProfilePreference>(pp => pp.ProfileId);
+
+        // Profile -> ViewingHistory (One-to-Many)
+        modelBuilder.Entity<Profile>()
+            .HasMany(p => p.ViewingHistories)
+            .WithOne(vh => vh.Profile)
+            .HasForeignKey(vh => vh.ProfileId);
+
+        // Profile -> Watchlist (One-to-One)
+        modelBuilder.Entity<Profile>()
+            .HasOne(p => p.Watchlist)
+            .WithOne(w => w.Profile)
+            .HasForeignKey<Watchlist>(w => w.ProfileId);
     }
 }

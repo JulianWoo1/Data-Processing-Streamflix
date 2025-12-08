@@ -96,6 +96,23 @@ public static class DbSeeder
                 ContentType = "Movie",
                 MinimumAge = 12,
                 ContentFilters = new List<string> { "Violence", "Strong language" }
+            },
+            Watchlist = new Watchlist
+            {
+                DateAdded = DateTime.UtcNow.Date,
+                // Content can be added later
+            },
+            ViewingHistories = new List<ViewingHistory>
+            {
+                new ViewingHistory
+                {
+                    ContentId = 1, // for example movie1
+                    EpisodeId = 0, // not applicable for movies
+                    StartTime = DateTime.UtcNow.AddHours(-1),
+                    EndTime = DateTime.UtcNow,
+                    LastPosition = 60,
+                    IsCompleted = true
+                }
             }
         };
 
@@ -111,6 +128,23 @@ public static class DbSeeder
                 ContentType = "Series",
                 MinimumAge = 16,
                 ContentFilters = new List<string> { "Violence" }
+            },
+            Watchlist = new Watchlist
+            {
+                DateAdded = DateTime.UtcNow.Date,
+                // Content can be added later
+            },
+            ViewingHistories = new List<ViewingHistory>
+            {
+                new ViewingHistory
+                {
+                    ContentId = 3, // for example series
+                    EpisodeId = 1, // first episode
+                    StartTime = DateTime.UtcNow.AddHours(-2),
+                    EndTime = null, // still watching
+                    LastPosition = 30,
+                    IsCompleted = false
+                }
             }
         };
 

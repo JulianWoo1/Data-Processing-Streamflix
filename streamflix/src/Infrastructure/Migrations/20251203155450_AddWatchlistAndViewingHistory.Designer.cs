@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Streamflix.Infrastructure.Data;
@@ -12,9 +13,11 @@ using Streamflix.Infrastructure.Data;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251203155450_AddWatchlistAndViewingHistory")]
+    partial class AddWatchlistAndViewingHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -222,7 +225,8 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("ViewingHistoryId");
 
-                    b.HasIndex("ProfileId");
+                    b.HasIndex("ProfileId")
+                        .IsUnique();
 
                     b.ToTable("ViewingHistories");
                 });
@@ -312,8 +316,8 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.ViewingHistory", b =>
                 {
                     b.HasOne("Streamflix.Infrastructure.Entities.Profile", "Profile")
-                        .WithMany("ViewingHistories")
-                        .HasForeignKey("ProfileId")
+                        .WithOne("ViewingHistory")
+                        .HasForeignKey("Streamflix.Infrastructure.Entities.ViewingHistory", "ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -335,7 +339,7 @@ namespace Infrastructure.Migrations
                 {
                     b.Navigation("Preference");
 
-                    b.Navigation("ViewingHistories");
+                    b.Navigation("ViewingHistory");
 
                     b.Navigation("Watchlist");
                 });
