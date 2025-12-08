@@ -23,22 +23,26 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<Profile> Profiles { get; set; }
     public DbSet<ProfilePreference> ProfilePreferences { get; set; }
+    public DbSet<Account> Accounts { get; set; }
+    public DbSet<Subscription> Subscriptions { get; set; }
+    public DbSet<Referral> Referrals { get; set; }
+    public DbSet<Discount> Discounts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure inheritance for Content
         modelBuilder.Entity<Content>()
-            .UseTphMappingStrategy(); // Table-per-Hierarchy is default, but good to be explicit or choose TPT if preferred.
+            .UseTphMappingStrategy();
 
-        // Configure relationships
+        // Relationships
 
         // Series -> Season (One-to-Many)
         modelBuilder.Entity<Season>()
             .HasOne(s => s.Series)
             .WithMany(ser => ser.Seasons)
-            .HasForeignKey(s => s.SeriesId);
+            .HasForeignKey(s => s.SeriesId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // Season -> Episode (One-to-Many)
         modelBuilder.Entity<Episode>()
@@ -63,5 +67,13 @@ public class ApplicationDbContext : DbContext
             .HasOne(p => p.Preference)
             .WithOne(pp => pp.Profile)
             .HasForeignKey<ProfilePreference>(pp => pp.ProfileId);
+            .HasForeignKey(e => e.SeasonId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Referral>()
+            .HasKey(r => r.ReferralId);
+
+        modelBuilder.Entity<Discount>()
+            .HasKey(d => d.DiscountId);
     }
 }
