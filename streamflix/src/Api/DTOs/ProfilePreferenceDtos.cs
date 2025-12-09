@@ -1,3 +1,5 @@
+namespace Streamflix.Api.DTOs;
+
 public record ProfilePreferenceDto(
     List<string> PreferredGenres,
     string ContentType,

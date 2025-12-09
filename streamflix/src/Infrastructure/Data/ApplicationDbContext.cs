@@ -27,6 +27,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Subscription> Subscriptions { get; set; }
     public DbSet<Referral> Referrals { get; set; }
     public DbSet<Discount> Discounts { get; set; }
+    public DbSet<ViewingHistory> ViewingHistories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -73,5 +74,11 @@ public class ApplicationDbContext : DbContext
 
         modelBuilder.Entity<Discount>()
             .HasKey(d => d.DiscountId);
+
+        // Profile -> ViewingHistory (One-to-Many)
+        modelBuilder.Entity<Profile>()
+            .HasMany(p => p.ViewingHistories)
+            .WithOne(vh => vh.Profile)
+            .HasForeignKey(vh => vh.ProfileId);
     }
 }
