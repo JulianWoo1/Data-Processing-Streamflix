@@ -9,7 +9,9 @@ using Streamflix.Api.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddXmlSerializerFormatters(); // Support XML responses
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
@@ -66,25 +68,36 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
     var context = services.GetRequiredService<ApplicationDbContext>();
 
-    var retries = 10;
-    while (retries > 0)
+    const int maxRetries = 10;
+    const int delayMs = 2000;
+
+    for (var attempt = 1; attempt <= maxRetries; attempt++)
     {
         try
         {
+            logger.LogInformation("Attempt {Attempt}/{MaxRetries}: Applying migrations...", attempt, maxRetries);
             context.Database.Migrate();
+            logger.LogInformation("Migrations applied. Seeding database...");
+            DbSeeder.Seed(context);
+            logger.LogInformation("Database seeding completed.");
             break;
         }
-        catch
+        catch (Exception ex)
         {
-            retries--;
-            Console.WriteLine("Waiting for DB to be ready...");
-            System.Threading.Thread.Sleep(2000);
+            logger.LogError(ex, "Error while migrating/seeding the database on attempt {Attempt}.", attempt);
+
+            if (attempt == maxRetries)
+            {
+                logger.LogCritical("Max retries reached. Giving up on database migration/seeding.");
+                throw;
+            }
+
+            Thread.Sleep(delayMs);
         }
     }
-
-    DbSeeder.Seed(context);
 }
 
 app.Urls.Add("http://0.0.0.0:5001");
