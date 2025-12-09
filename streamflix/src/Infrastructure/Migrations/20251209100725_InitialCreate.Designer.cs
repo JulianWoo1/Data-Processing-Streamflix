@@ -13,7 +13,7 @@ using Streamflix.Infrastructure.Data;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251208153607_InitialCreate")]
+    [Migration("20251209100725_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -348,6 +348,42 @@ namespace Infrastructure.Migrations
                     b.ToTable("Subscriptions");
                 });
 
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.ViewingHistory", b =>
+                {
+                    b.Property<int>("ViewingHistoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ViewingHistoryId"));
+
+                    b.Property<int>("ContentId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("EpisodeId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LastPosition")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ViewingHistoryId");
+
+                    b.HasIndex("ProfileId");
+
+                    b.ToTable("ViewingHistories");
+                });
+
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Watchlist", b =>
                 {
                     b.Property<int>("WatchlistId")
@@ -363,6 +399,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("WatchlistId");
+
+                    b.HasIndex("ProfileId")
+                        .IsUnique();
 
                     b.ToTable("Watchlists");
                 });
@@ -446,6 +485,26 @@ namespace Infrastructure.Migrations
                     b.Navigation("Series");
                 });
 
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.ViewingHistory", b =>
+                {
+                    b.HasOne("Streamflix.Infrastructure.Entities.Profile", "Profile")
+                        .WithMany("ViewingHistories")
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Profile");
+                });
+
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Watchlist", b =>
+                {
+                    b.HasOne("Streamflix.Infrastructure.Entities.Profile", null)
+                        .WithOne("Watchlist")
+                        .HasForeignKey("Streamflix.Infrastructure.Entities.Watchlist", "ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.WatchlistContent", b =>
                 {
                     b.HasOne("Streamflix.Infrastructure.Entities.Content", "Content")
@@ -468,6 +527,10 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Profile", b =>
                 {
                     b.Navigation("Preference");
+
+                    b.Navigation("ViewingHistories");
+
+                    b.Navigation("Watchlist");
                 });
 
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Season", b =>

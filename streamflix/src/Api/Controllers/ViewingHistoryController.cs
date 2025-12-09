@@ -34,7 +34,7 @@ public class ViewingHistoryController : ControllerBase
     {
         var newHistory = new ViewingHistory
         {
-            ProfileId = request.profileId,
+            ProfileId = request.ProfileId,
             ContentId = request.ContentId,
             EpisodeId = request.EpisodeId,
             StartTime = DateTime.UtcNow,

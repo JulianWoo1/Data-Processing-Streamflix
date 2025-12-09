@@ -104,11 +104,6 @@ public static class DbSeeder
                 MinimumAge = 12,
                 ContentFilters = new List<string> { "Violence", "Strong language" }
             },
-            Watchlist = new Watchlist
-            {
-                DateAdded = DateTime.UtcNow.Date,
-                // Content can be added later
-            },
             ViewingHistories = new List<ViewingHistory>
             {
                 new ViewingHistory
@@ -135,11 +130,6 @@ public static class DbSeeder
                 ContentType = "Series",
                 MinimumAge = 16,
                 ContentFilters = new List<string> { "Violence" }
-            },
-            Watchlist = new Watchlist
-            {
-                DateAdded = DateTime.UtcNow.Date,
-                // Content can be added later
             },
             ViewingHistories = new List<ViewingHistory>
             {

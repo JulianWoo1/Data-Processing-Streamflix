@@ -14,7 +14,6 @@ public record ProfileDto(
     string AgeCategory,
     string ImageUrl,
     ProfilePreferenceDto? Preference,
-    WatchlistDto? Watchlist,
     IEnumerable<ViewingHistoryDto> ViewingHistories
 );
 
