@@ -6,11 +6,16 @@ using System.Text;
 using Streamflix.Infrastructure.Data;
 using Streamflix.Api.Services;
 using Streamflix.Api.Settings;
+using Streamflix.Api.Formatting;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AddControllers()
+
+    .AddControllers(options =>
+    {
+        options.OutputFormatters.Add(new CsvOutputFormatter()); // Support CSV responses
+    })
     .AddXmlSerializerFormatters(); // Support XML responses
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
