@@ -23,6 +23,54 @@ namespace Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Account", b =>
+                {
+                    b.Property<int>("AccountId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AccountId"));
+
+                    b.Property<DateTime>("BlockedUntil")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("LastLogin")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PasswordResetToken")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("RegistrationDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("TokenExpire")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("VerificationToken")
+                        .HasColumnType("text");
+
+                    b.HasKey("AccountId");
+
+                    b.ToTable("Accounts");
+                });
+
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Content", b =>
                 {
                     b.Property<int>("ContentId")
@@ -70,6 +118,34 @@ namespace Infrastructure.Migrations
                     b.HasDiscriminator().HasValue("Content");
 
                     b.UseTphMappingStrategy();
+                });
+
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Discount", b =>
+                {
+                    b.Property<int>("DiscountId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("DiscountId"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("DiscountAmount")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("DiscountId");
+
+                    b.ToTable("Discounts");
                 });
 
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Episode", b =>
@@ -162,6 +238,47 @@ namespace Infrastructure.Migrations
                     b.ToTable("ProfilePreferences");
                 });
 
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Referral", b =>
+                {
+                    b.Property<int>("ReferralId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ReferralId"));
+
+                    b.Property<DateTime?>("AcceptDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DiscountEndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DiscountStartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InvitationCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("InvitationDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDiscountApplied")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("ReferredAccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ReferrerAccountId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ReferralId");
+
+                    b.ToTable("Referrals");
+                });
+
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Season", b =>
                 {
                     b.Property<int>("SeasonId")
@@ -184,6 +301,48 @@ namespace Infrastructure.Migrations
                     b.HasIndex("SeriesId");
 
                     b.ToTable("Seasons");
+                });
+
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Subscription", b =>
+                {
+                    b.Property<int>("SubscriptionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SubscriptionId"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("BasePrice")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsTrialPeriod")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SubscriptionDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SubscriptionType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("TrialPeriodEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("SubscriptionId");
+
+                    b.ToTable("Subscriptions");
                 });
 
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Watchlist", b =>
