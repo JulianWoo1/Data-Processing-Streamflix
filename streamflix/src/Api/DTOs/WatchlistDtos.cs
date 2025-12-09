@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 namespace Streamflix.Api.DTOs;
 
 public record WatchlistDto(
@@ -21,6 +22,9 @@ public record WatchlistContentDto(
 );
 
 public record AddToWatchListRequest(
+    [Range(1, int.MaxValue, ErrorMessage = "ProfileId must be a positive integer.")]
     int ProfileId,
+
+    [Range(1, int.MaxValue, ErrorMessage = "ContentId must be a positive integer.")]
     int ContentId
 );
