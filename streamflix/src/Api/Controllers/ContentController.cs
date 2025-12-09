@@ -71,28 +71,6 @@ public class ContentController : ControllerBase
         return Ok(movies.Select(ToMovieDto));
     }
 
-    // Create a new movie
-    [HttpPost("movies")]
-    public async Task<ActionResult<MovieDto>> CreateMovie(CreateMovieDto request)
-    {
-        var movie = new Movie
-        {
-            Title = request.Title,
-            Description = request.Description,
-            AgeRating = request.AgeRating,
-            ImageURL = request.ImageURL,
-            Duration = request.Duration,
-            Genre = request.Genre,
-            AvailableQualities = request.AvailableQualities,
-            ContentWarnings = request.ContentWarnings
-        };
-
-        _db.Movies.Add(movie);
-        await _db.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetMovie), new { id = movie.ContentId }, ToMovieDto(movie));
-    }
-
     // Series Endpoints\\
     // Get all series
     [HttpGet("series")]
@@ -153,28 +131,6 @@ public class ContentController : ControllerBase
             .ToListAsync();
 
         return Ok(seriesList.Select(ToSeriesWithSeasonsDto));
-    }
-
-    // Create a new series
-    [HttpPost("series")]
-    public async Task<ActionResult<SeriesDto>> CreateSeries(CreateSeriesDto request)
-    {
-        var series = new Series
-        {
-            Title = request.Title,
-            Description = request.Description,
-            AgeRating = request.AgeRating,
-            ImageURL = request.ImageURL,
-            TotalSeasons = request.TotalSeasons,
-            Genre = request.Genre,
-            AvailableQualities = request.AvailableQualities,
-            ContentWarnings = request.ContentWarnings
-        };
-
-        _db.Series.Add(series);
-        await _db.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetSeries), new { id = series.ContentId }, ToSeriesSummaryDto(series));
     }
 
     // TODO: Potentially switch to AutoMapper

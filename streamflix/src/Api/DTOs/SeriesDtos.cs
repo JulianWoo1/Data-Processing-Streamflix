@@ -1,16 +1,5 @@
 namespace Streamflix.Api.DTOs;
 
-public record CreateSeriesDto(
-    string Title,
-    string Description,
-    int AgeRating,
-    string ImageURL,
-    int TotalSeasons,
-    string Genre,
-    List<string> ContentWarnings,
-    List<string> AvailableQualities
-);
-
 public record SeriesDto(
     int Id,
     string Title,
