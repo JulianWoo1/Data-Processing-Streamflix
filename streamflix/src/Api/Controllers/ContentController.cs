@@ -43,6 +43,68 @@ public class ContentController : ControllerBase
         return Ok(ToMovieDto(movie));
     }
 
+    // Personalized movies for a profile based on profile preferences and age/kijkwijzer filters
+    // Example: GET /api/Content/movies/personalized?profileId=1
+    [HttpGet("movies/personalized")]
+    public async Task<ActionResult<IEnumerable<MovieDto>>> GetPersonalizedMovies([FromQuery] int profileId)
+    {
+        // Load profile with preference
+        var profile = await _db.Profiles
+            .Include(p => p.Preference)
+            .FirstOrDefaultAsync(p => p.ProfileId == profileId);
+
+        if (profile == null)
+        {
+            return NotFound("Profile not found.");
+        }
+
+        IQueryable<Movie> query = _db.Movies;
+
+        // Apply age filter: only content with AgeRating <= profile.MinimumAge (if set)
+        if (profile.Preference != null && profile.Preference.MinimumAge > 0)
+        {
+            query = query.Where(m => m.AgeRating <= profile.Preference.MinimumAge);
+        }
+
+        // Apply preferred genres: if any preferred genres, prioritize/filter by them
+        if (profile.Preference != null && profile.Preference.PreferredGenres.Any())
+        {
+            var preferredGenres = profile.Preference.PreferredGenres
+                .Select(g => g.ToLower())
+                .ToList();
+
+            query = query.Where(m => preferredGenres.Contains(m.Genre.ToLower()));
+        }
+
+        // Apply content type filter if needed (e.g., "movies", "series", "both")
+        if (profile.Preference != null && !string.IsNullOrWhiteSpace(profile.Preference.ContentType))
+        {
+            // For now, only handle "movies" or "all". Since this endpoint is movies-only,
+            // we ignore "series" here. Logic is mostly for completeness.
+            var contentType = profile.Preference.ContentType.ToLower();
+            if (contentType == "series")
+            {
+                // If profile prefers only series, return empty list for movies endpoint.
+                return Ok(Enumerable.Empty<MovieDto>());
+            }
+        }
+
+        // Apply content warnings filters: exclude movies that contain any of the filtered warnings
+        if (profile.Preference != null && profile.Preference.ContentFilters.Any())
+        {
+            var blockedWarnings = profile.Preference.ContentFilters
+                .Select(w => w.ToLower())
+                .ToList();
+
+            query = query.Where(m =>
+                !m.ContentWarnings.Any(w => blockedWarnings.Contains(w.ToLower())));
+        }
+
+        var movies = await query.ToListAsync();
+
+        return Ok(movies.Select(ToMovieDto));
+    }
+
     // Get movie by Title
     [HttpGet("movies/title/{title}")]
     public async Task<ActionResult<MovieDto>> GetMovieByTitle(string title)
@@ -117,6 +179,67 @@ public class ContentController : ControllerBase
         }
 
         return Ok(ToSeriesWithSeasonsDto(series));
+    }
+
+    // Personalized series for a profile based on profile preferences and age/kijkwijzer filters
+    // Example: GET /api/Content/series/personalized?profileId=1
+    [HttpGet("series/personalized")]
+    public async Task<ActionResult<IEnumerable<SeriesDto>>> GetPersonalizedSeries([FromQuery] int profileId)
+    {
+        // Load profile with preference
+        var profile = await _db.Profiles
+            .Include(p => p.Preference)
+            .FirstOrDefaultAsync(p => p.ProfileId == profileId);
+
+        if (profile == null)
+        {
+            return NotFound("Profile not found.");
+        }
+
+        IQueryable<Series> query = _db.Series
+            .Include(s => s.Seasons)
+                .ThenInclude(season => season.Episodes);
+
+        // Apply age filter: only content with AgeRating <= profile.MinimumAge (if set)
+        if (profile.Preference != null && profile.Preference.MinimumAge > 0)
+        {
+            query = query.Where(s => s.AgeRating <= profile.Preference.MinimumAge);
+        }
+
+        // Apply preferred genres: if any preferred genres, prioritize/filter by them
+        if (profile.Preference != null && profile.Preference.PreferredGenres.Any())
+        {
+            var preferredGenres = profile.Preference.PreferredGenres
+                .Select(g => g.ToLower())
+                .ToList();
+
+            query = query.Where(s => preferredGenres.Contains(s.Genre.ToLower()));
+        }
+
+        // Apply content type filter if needed (e.g., "movies", "series", "both")
+        if (profile.Preference != null && !string.IsNullOrWhiteSpace(profile.Preference.ContentType))
+        {
+            var contentType = profile.Preference.ContentType.ToLower();
+            if (contentType == "movies")
+            {
+                // If profile prefers only movies, return empty list for series endpoint.
+                return Ok(Enumerable.Empty<SeriesDto>());
+            }
+        }
+
+        // Apply content warnings filters: exclude series that contain any of the filtered warnings
+        if (profile.Preference != null && profile.Preference.ContentFilters.Any())
+        {
+            var blockedWarnings = profile.Preference.ContentFilters
+                .Select(w => w.ToLower())
+                .ToList();
+
+            query = query.Where(s =>
+                !s.ContentWarnings.Any(w => blockedWarnings.Contains(w.ToLower())));
+        }
+        var seriesList = await query.ToListAsync();
+
+        return Ok(seriesList.Select(ToSeriesWithSeasonsDto));
     }
 
     // Get series by Genre
