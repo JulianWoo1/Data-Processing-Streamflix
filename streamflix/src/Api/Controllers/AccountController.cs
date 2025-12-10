@@ -5,7 +5,7 @@ using Streamflix.Api.DTOs;
 namespace Streamflix.Api.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class AccountController : ControllerBase
 {
     private readonly IAccountService _accountService;
@@ -20,7 +20,7 @@ public class AccountController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] CreateAccountDto dto)
     {
-        if(!ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
@@ -31,17 +31,17 @@ public class AccountController : ControllerBase
         try
         {
             var result = await _accountService.RegisterAsync(dto);
-            
+
             if (_hostEnvironment.IsDevelopment())
             {
-                return Ok(new 
-                { 
-                    result.account.AccountId, 
+                return Ok(new
+                {
+                    result.account.AccountId,
                     result.account.Email,
                     VerificationToken = result.verificationToken
                 });
             }
-            
+
             return Ok(new { result.account.AccountId, result.account.Email });
         }
         catch (InvalidOperationException ex)
@@ -61,8 +61,8 @@ public class AccountController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
         var result = await _accountService.LoginAsync(dto);
-        return result.Success 
-            ? Ok(new { Token = result.Token }) 
+        return result.Success
+            ? Ok(new { Token = result.Token })
             : Unauthorized(result.ErrorMessage);
     }
 
@@ -71,10 +71,10 @@ public class AccountController : ControllerBase
     {
         var resetToken = await _accountService.RequestPasswordResetAsync(dto);
 
-        return Ok(new 
-        { 
-            Message = resetToken != null 
-                ? "Password reset token generated successfully." 
+        return Ok(new
+        {
+            Message = resetToken != null
+                ? "Password reset token generated successfully."
                 : "If an account exists, a reset link was sent.",
             PasswordResetToken = resetToken
         });
@@ -93,8 +93,8 @@ public class AccountController : ControllerBase
         var account = await _accountService.GetAccountInfoAsync(email);
         if (account == null)
         {
-            return NotFound();  
-        } 
+            return NotFound();
+        }
 
         return Ok(new
         {

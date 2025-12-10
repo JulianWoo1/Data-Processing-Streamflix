@@ -5,7 +5,7 @@ using Streamflix.Api.DTOs;
 namespace Streamflix.Api.Controllers;
 
 [ApiController]
-[Route("referral")]
+[Route("api/[controller]")]
 public class ReferralController : ControllerBase
 {
     private readonly IReferralService _service;

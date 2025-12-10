@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Streamflix.Api.DTOs;
 using Streamflix.Infrastructure.Data;
 using Streamflix.Infrastructure.Entities;
+using Streamflix.Api.Services;
 
 namespace Streamflix.Api.Controllers;
 
@@ -10,109 +11,65 @@ namespace Streamflix.Api.Controllers;
 [Route("api/[controller]")]
 public class ProfileController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IProfileService _profileService;
 
-    public ProfileController(ApplicationDbContext db)
+    public ProfileController(IProfileService profileService)
     {
-        _db = db;
+        _profileService = profileService;
     }
 
-    // GET all profiles
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ProfileDto>>> GetProfiles()
     {
-        var profiles = await _db.Profiles
-            .Include(p => p.Preference)
-            .Include(p => p.ViewingHistories)
-            .ToListAsync();
+        var profiles = await _profileService.GetProfilesAsync();
 
-        return Ok(profiles.Select(ToDto));
+        return Ok(profiles);
     }
 
-    // GET profile by id
     [HttpGet("{id}")]
     public async Task<ActionResult<ProfileDto>> GetProfile(int id)
     {
-        var profile = await _db.Profiles
-            .Include(p => p.Preference)
-            .Include(p => p.ViewingHistories)
-            .FirstOrDefaultAsync(p => p.ProfileId == id);
-
+        var profile = await _profileService.GetProfileAsync(id);
         if (profile == null) return NotFound();
-        return Ok(ToDto(profile));
+
+        return Ok(profile);
     }
 
-    // POST create profile
     [HttpPost]
     public async Task<ActionResult<ProfileDto>> CreateProfile(CreateProfileDto request)
     {
-        var profile = new Profile
-        {
-            AccountId = request.AccountId,
-            Name = request.Name,
-            AgeCategory = request.AgeCategory,
-            ImageUrl = request.ImageUrl
-        };
+        var created = await _profileService.CreateProfileAsync(request);
 
-        _db.Profiles.Add(profile);
-        await _db.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetProfile), new { id = profile.ProfileId }, ToDto(profile));
+        return CreatedAtAction(nameof(GetProfile), new { id = created.ProfileId }, created);
     }
 
-    // PUT update profile
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProfile(int id, UpdateProfileDto request)
     {
-        var profile = await _db.Profiles.FindAsync(id);
-        if (profile == null) return NotFound();
+        var success = await _profileService.UpdateProfileAsync(id, request);
+        if (!success) return NotFound();
 
-        profile.Name = request.Name;
-        profile.AgeCategory = request.AgeCategory;
-        profile.ImageUrl = request.ImageUrl;
-
-        await _db.SaveChangesAsync();
         return NoContent();
     }
 
-    // DELETE profile
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProfile(int id)
     {
-        var profile = await _db.Profiles.FindAsync(id);
-        if (profile == null) return NotFound();
+        var success = await _profileService.DeleteProfileAsync(id);
+        if (!success) return NotFound();
 
-        _db.Profiles.Remove(profile);
-        await _db.SaveChangesAsync();
         return NoContent();
     }
 
-    // PUT update profile preference
     [HttpPut("{id}/preference")]
     public async Task<IActionResult> UpdatePreference(int id, UpdateProfilePreferenceDto request)
     {
-        var profile = await _db.Profiles
-            .Include(p => p.Preference)
-            .FirstOrDefaultAsync(p => p.ProfileId == id);
+        var success = await _profileService.UpdatePreferenceAsync(id, request);
+        if (!success) return NotFound();
 
-        if (profile == null) return NotFound();
-
-        if (profile.Preference == null)
-        {
-            profile.Preference = new ProfilePreference { ProfileId = id };
-            _db.ProfilePreferences.Add(profile.Preference);
-        }
-
-        profile.Preference.PreferredGenres = request.PreferredGenres;
-        profile.Preference.ContentType = request.ContentType;
-        profile.Preference.MinimumAge = request.MinimumAge;
-        profile.Preference.ContentFilters = request.ContentFilters;
-
-        await _db.SaveChangesAsync();
         return NoContent();
     }
 
-    // Helper method: map entity → DTO
     private static ProfileDto ToDto(Profile p) =>
         new ProfileDto(
             p.ProfileId,

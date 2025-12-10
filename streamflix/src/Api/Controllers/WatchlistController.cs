@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Streamflix.Api.DTOs;
-using Streamflix.Infrastructure.Data;
 using Streamflix.Infrastructure.Entities;
+using Streamflix.Api.Services;
 
 namespace Streamflix.Api.Controllers;
 
@@ -10,23 +10,18 @@ namespace Streamflix.Api.Controllers;
 [Route("api/[controller]")]
 public class WatchlistController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IWatchlistService _watchlistService;
 
-    public WatchlistController(ApplicationDbContext db)
+    public WatchlistController(IWatchlistService watchlistService)
     {
-        _db = db;
+        _watchlistService = watchlistService;
     }
 
     // Watchlist Endpoints\\
-
-    // Get watchlist by Profile ID
     [HttpGet("profile/{profileId}")]
     public async Task<ActionResult<WatchlistDto>> GetWatchlistByProfileId(int profileId)
     {
-        var watchlist = await _db.Watchlists
-            .Include(w => w.Items)
-                .ThenInclude(wc => wc.Content)
-            .FirstOrDefaultAsync(w => w.ProfileId == profileId);
+        var watchlist = await _watchlistService.GetWatchlistByProfileIdAsync(profileId);
 
         if (watchlist == null)
         {
@@ -36,85 +31,37 @@ public class WatchlistController : ControllerBase
         return Ok(ToWatchlistDto(watchlist));
     }
 
-    // Add content to watchlist (auto-creates watchlist if needed)
     [HttpPost("profile/{profileId}/add/{contentId}")]
     public async Task<ActionResult<WatchlistDto>> AddContentToWatchlist(int profileId, int contentId)
     {
-        // Optional but safer: ensure profile exists
-        var profileExists = await _db.Profiles.AnyAsync(p => p.ProfileId == profileId);
-        if (!profileExists)
+        try
         {
-            return NotFound("Profile not found.");
+            var watchlist = await _watchlistService.AddContentToWatchlistAsync(profileId, contentId);
+            return Ok(ToWatchlistDto(watchlist));
         }
-
-        // Optional: ensure content exists
-        var contentExists = await _db.Contents.AnyAsync(c => c.ContentId == contentId);
-        if (!contentExists)
+        catch (InvalidOperationException ex)
         {
-            return NotFound("Content not found.");
+            return BadRequest(ex.Message);
         }
-
-        var watchlist = await _db.Watchlists
-            .Include(w => w.Items)
-            .FirstOrDefaultAsync(w => w.ProfileId == profileId);
-
-        // Auto-create watchlist if it doesn't exist yet
-        if (watchlist == null)
+        catch (KeyNotFoundException ex)
         {
-            watchlist = new Watchlist
-            {
-                ProfileId = profileId,
-                CreatedAt = DateTime.UtcNow,
-                Items = new List<WatchlistContent>()
-            };
-            _db.Watchlists.Add(watchlist);
+            return NotFound(ex.Message);
         }
-
-        if (watchlist.Items.Any(wc => wc.ContentId == contentId))
-        {
-            return BadRequest("Content already exists in the watchlist.");
-        }
-
-        watchlist.Items.Add(new WatchlistContent
-        {
-            ContentId = contentId,
-            DateAdded = DateTime.UtcNow
-        });
-
-        await _db.SaveChangesAsync();
-
-        // Reload including Content so DTO has full info
-        watchlist = await _db.Watchlists
-            .Include(w => w.Items)
-                .ThenInclude(wc => wc.Content)
-            .FirstAsync(w => w.WatchlistId == watchlist.WatchlistId);
-
-        return Ok(ToWatchlistDto(watchlist));
     }
 
-    // Remove content from watchlist
     [HttpDelete("profile/{profileId}/remove/{contentId}")]
     public async Task<ActionResult> RemoveFromWatchListByContent(int profileId, int contentId)
     {
-        var item = await _db.WatchlistContents
-            .Include(wc => wc.Watchlist)
-            .FirstOrDefaultAsync(wc =>
-                wc.Watchlist.ProfileId == profileId &&
-                wc.ContentId == contentId);
-
-        if (item == null)
+        var removed = await _watchlistService.RemoveFromWatchlistAsync(profileId, contentId);
+        if (!removed)
         {
             return NotFound();
         }
-
-        _db.WatchlistContents.Remove(item);
-        await _db.SaveChangesAsync();
 
         return NoContent();
     }
 
     // Helper Methods\\
-
     // Convert Watchlist entity to WatchlistDto
     private static WatchlistDto ToWatchlistDto(Watchlist watchlist) =>
         new WatchlistDto(

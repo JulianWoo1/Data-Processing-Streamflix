@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Streamflix.Api.DTOs;
-using Streamflix.Infrastructure.Data;
 using Streamflix.Infrastructure.Entities;
+using Streamflix.Api.Services;
 
 namespace Streamflix.Api.Controllers;
 
@@ -10,30 +10,26 @@ namespace Streamflix.Api.Controllers;
 [Route("api/[controller]")]
 public class ContentController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
 
-    public ContentController(ApplicationDbContext db)
+    private readonly IContentService _contentService;
+
+    public ContentController(IContentService contentService)
     {
-        _db = db;
+        _contentService = contentService;
     }
 
-    //Movie Endpoints\\
-    // Get all movies
     [HttpGet("movies")]
     public async Task<ActionResult<IEnumerable<MovieDto>>> GetMovies()
     {
-        var movies = await _db.Movies
-            .ToListAsync();
+        var movies = await _contentService.GetMoviesAsync();
 
         return Ok(movies.Select(ToMovieDto));
     }
 
-    // Get movie by ID
     [HttpGet("movies/{id}")]
     public async Task<ActionResult<MovieDto>> GetMovie(int id)
     {
-        var movie = await _db.Movies
-            .FirstOrDefaultAsync(m => m.ContentId == id);
+        var movie = await _contentService.GetMovieByIdAsync(id);
 
         if (movie == null)
         {
@@ -43,75 +39,24 @@ public class ContentController : ControllerBase
         return Ok(ToMovieDto(movie));
     }
 
-    // Personalized movies for a profile based on profile preferences and age/kijkwijzer filters
-    // Example: GET /api/Content/movies/personalized?profileId=1
     [HttpGet("movies/personalized")]
     public async Task<ActionResult<IEnumerable<MovieDto>>> GetPersonalizedMovies([FromQuery] int profileId)
     {
-        // Load profile with preference
-        var profile = await _db.Profiles
-            .Include(p => p.Preference)
-            .FirstOrDefaultAsync(p => p.ProfileId == profileId);
 
-        if (profile == null)
+        var result = await _contentService.GetPersonalizedMoviesAsync(profileId);
+
+        if (!result.ProfileExists)
         {
             return NotFound("Profile not found.");
         }
 
-        IQueryable<Movie> query = _db.Movies;
-
-        // Apply age filter: only content with AgeRating <= profile.MinimumAge (if set)
-        if (profile.Preference != null && profile.Preference.MinimumAge > 0)
-        {
-            query = query.Where(m => m.AgeRating <= profile.Preference.MinimumAge);
-        }
-
-        // Apply preferred genres: if any preferred genres, prioritize/filter by them
-        if (profile.Preference != null && profile.Preference.PreferredGenres.Any())
-        {
-            var preferredGenres = profile.Preference.PreferredGenres
-                .Select(g => g.ToLower())
-                .ToList();
-
-            query = query.Where(m => preferredGenres.Contains(m.Genre.ToLower()));
-        }
-
-        // Apply content type filter if needed (e.g., "movies", "series", "both")
-        if (profile.Preference != null && !string.IsNullOrWhiteSpace(profile.Preference.ContentType))
-        {
-            // For now, only handle "movies" or "all". Since this endpoint is movies-only,
-            // we ignore "series" here. Logic is mostly for completeness.
-            var contentType = profile.Preference.ContentType.ToLower();
-            if (contentType == "series")
-            {
-                // If profile prefers only series, return empty list for movies endpoint.
-                return Ok(Enumerable.Empty<MovieDto>());
-            }
-        }
-
-        // Apply content warnings filters: exclude movies that contain any of the filtered warnings
-        if (profile.Preference != null && profile.Preference.ContentFilters.Any())
-        {
-            var blockedWarnings = profile.Preference.ContentFilters
-                .Select(w => w.ToLower())
-                .ToList();
-
-            query = query.Where(m =>
-                !m.ContentWarnings.Any(w => blockedWarnings.Contains(w.ToLower())));
-        }
-
-        var movies = await query.ToListAsync();
-
-        return Ok(movies.Select(ToMovieDto));
+        return Ok(result.Movies.Select(ToMovieDto));
     }
 
-    // Get movie by Title
     [HttpGet("movies/title/{title}")]
     public async Task<ActionResult<MovieDto>> GetMovieByTitle(string title)
     {
-        var normalizedTitle = title.ToLower();
-        var movie = await _db.Movies
-            .FirstOrDefaultAsync(m => m.Title.ToLower() == normalizedTitle);
+        var movie = await _contentService.GetMovieByTitleAsync(title);
 
         if (movie == null)
         {
@@ -121,39 +66,26 @@ public class ContentController : ControllerBase
         return Ok(ToMovieDto(movie));
     }
 
-    // Get movies by Genre
     [HttpGet("movies/genre/{genre}")]
     public async Task<ActionResult<IEnumerable<MovieDto>>> GetMoviesByGenre(string genre)
     {
-        var normalizedGenre = genre.ToLower();
-        var movies = await _db.Movies
-            .Where(m => m.Genre.ToLower() == normalizedGenre)
-            .ToListAsync();
+        var movies = await _contentService.GetMoviesByGenreAsync(genre);
 
         return Ok(movies.Select(ToMovieDto));
     }
 
-    // Series Endpoints\\
-    // Get all series
     [HttpGet("series")]
     public async Task<ActionResult<IEnumerable<SeriesDto>>> GetSeries()
     {
-        var series = await _db.Series
-            .Include(s => s.Seasons)
-                .ThenInclude(season => season.Episodes)
-            .ToListAsync();
+        var series = await _contentService.GetSeriesAsync();
 
         return Ok(series.Select(ToSeriesWithSeasonsDto));
     }
 
-    // Get series by ID
     [HttpGet("series/{id}")]
     public async Task<ActionResult<SeriesDto>> GetSeries(int id)
     {
-        var series = await _db.Series
-            .Include(s => s.Seasons)
-                .ThenInclude(season => season.Episodes)
-            .FirstOrDefaultAsync(s => s.ContentId == id);
+        var series = await _contentService.GetSeriesByIdAsync(id);
 
         if (series == null)
         {
@@ -163,15 +95,10 @@ public class ContentController : ControllerBase
         return Ok(ToSeriesWithSeasonsDto(series));
     }
 
-    // Get series by Title
     [HttpGet("series/title/{title}")]
     public async Task<ActionResult<SeriesDto>> GetSeriesByTitle(string title)
     {
-        var normalizedTitle = title.ToLower();
-        var series = await _db.Series
-            .Include(s => s.Seasons)
-                .ThenInclude(season => season.Episodes)
-            .FirstOrDefaultAsync(s => s.Title.ToLower() == normalizedTitle);
+        var series = await _contentService.GetSeriesByTitleAsync(title);
 
         if (series == null)
         {
@@ -181,82 +108,27 @@ public class ContentController : ControllerBase
         return Ok(ToSeriesWithSeasonsDto(series));
     }
 
-    // Personalized series for a profile based on profile preferences and age/kijkwijzer filters
-    // Example: GET /api/Content/series/personalized?profileId=1
     [HttpGet("series/personalized")]
     public async Task<ActionResult<IEnumerable<SeriesDto>>> GetPersonalizedSeries([FromQuery] int profileId)
     {
-        // Load profile with preference
-        var profile = await _db.Profiles
-            .Include(p => p.Preference)
-            .FirstOrDefaultAsync(p => p.ProfileId == profileId);
+        var result = await _contentService.GetPersonalizedSeriesAsync(profileId);
 
-        if (profile == null)
+        if (!result.ProfileExists)
         {
             return NotFound("Profile not found.");
         }
 
-        IQueryable<Series> query = _db.Series
-            .Include(s => s.Seasons)
-                .ThenInclude(season => season.Episodes);
-
-        // Apply age filter: only content with AgeRating <= profile.MinimumAge (if set)
-        if (profile.Preference != null && profile.Preference.MinimumAge > 0)
-        {
-            query = query.Where(s => s.AgeRating <= profile.Preference.MinimumAge);
-        }
-
-        // Apply preferred genres: if any preferred genres, prioritize/filter by them
-        if (profile.Preference != null && profile.Preference.PreferredGenres.Any())
-        {
-            var preferredGenres = profile.Preference.PreferredGenres
-                .Select(g => g.ToLower())
-                .ToList();
-
-            query = query.Where(s => preferredGenres.Contains(s.Genre.ToLower()));
-        }
-
-        // Apply content type filter if needed (e.g., "movies", "series", "both")
-        if (profile.Preference != null && !string.IsNullOrWhiteSpace(profile.Preference.ContentType))
-        {
-            var contentType = profile.Preference.ContentType.ToLower();
-            if (contentType == "movies")
-            {
-                // If profile prefers only movies, return empty list for series endpoint.
-                return Ok(Enumerable.Empty<SeriesDto>());
-            }
-        }
-
-        // Apply content warnings filters: exclude series that contain any of the filtered warnings
-        if (profile.Preference != null && profile.Preference.ContentFilters.Any())
-        {
-            var blockedWarnings = profile.Preference.ContentFilters
-                .Select(w => w.ToLower())
-                .ToList();
-
-            query = query.Where(s =>
-                !s.ContentWarnings.Any(w => blockedWarnings.Contains(w.ToLower())));
-        }
-        var seriesList = await query.ToListAsync();
-
-        return Ok(seriesList.Select(ToSeriesWithSeasonsDto));
+        return Ok(result.Series.Select(ToSeriesWithSeasonsDto));
     }
 
-    // Get series by Genre
     [HttpGet("series/genre/{genre}")]
     public async Task<ActionResult<IEnumerable<SeriesDto>>> GetSeriesByGenre(string genre)
     {
-        var normalizedGenre = genre.ToLower();
-        var seriesList = await _db.Series
-            .Include(s => s.Seasons)
-                .ThenInclude(season => season.Episodes)
-            .Where(s => s.Genre.ToLower() == normalizedGenre)
-            .ToListAsync();
+        var seriesList = await _contentService.GetSeriesByGenreAsync(genre);
 
         return Ok(seriesList.Select(ToSeriesWithSeasonsDto));
     }
 
-    // TODO: Potentially switch to AutoMapper
     //Helper Methods\\
     private static MovieDto ToMovieDto(Movie m) =>
         new MovieDto(

@@ -5,7 +5,7 @@ using Streamflix.Infrastructure.Entities;
 namespace Streamflix.Api.Controllers;
 
 [ApiController]
-[Route("subscription")]
+[Route("api/[controller]")]
 public class SubscriptionController : ControllerBase
 {
     private readonly ISubscriptionService _service;
@@ -21,7 +21,7 @@ public class SubscriptionController : ControllerBase
         var subscription = await _service.GetSubscriptionAsync(accountId);
         if (subscription == null)
         {
-            return NotFound("Subscription not found");            
+            return NotFound("Subscription not found");
         }
 
         return Ok(subscription);
@@ -32,7 +32,7 @@ public class SubscriptionController : ControllerBase
     {
         var sub = await _service.CreateSubscriptionAsync(dto);
 
-        return CreatedAtAction(nameof(GetSubscription), new 
+        return CreatedAtAction(nameof(GetSubscription), new
         {
             accountId = sub.AccountId
         }, sub);
@@ -43,14 +43,14 @@ public class SubscriptionController : ControllerBase
     {
         if (subscriptionId != dto.SubscriptionId)
         {
-            return BadRequest("SubscriptionId mismatch");            
+            return BadRequest("SubscriptionId mismatch");
         }
 
         var updated = await _service.ChangeSubscriptionAsync(dto);
 
         if (updated == null)
         {
-            return NotFound("Subscription not found or inactive");            
+            return NotFound("Subscription not found or inactive");
         }
 
         return Ok(updated);
@@ -62,7 +62,7 @@ public class SubscriptionController : ControllerBase
         var success = await _service.CancelSubscriptionAsync(subscriptionId);
         if (!success)
         {
-            return NotFound("Subscription not found");            
+            return NotFound("Subscription not found");
         }
 
         return NoContent();
@@ -74,7 +74,7 @@ public class SubscriptionController : ControllerBase
         var renewed = await _service.RenewSubscriptionAsync(subscriptionId);
         if (renewed == null)
         {
-            return NotFound();            
+            return NotFound();
         }
 
         return Ok(renewed);
