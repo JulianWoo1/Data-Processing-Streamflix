@@ -1,21 +1,12 @@
-
 using Microsoft.AspNetCore.Mvc;
-
 using Microsoft.EntityFrameworkCore;
-
 using Streamflix.Api.DTOs;
-
 using Streamflix.Infrastructure.Data;
-
 using Streamflix.Infrastructure.Entities;
-
 using Streamflix.Api.Services;
-
 using Microsoft.AspNetCore.Authorization;
-
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
-
 
 namespace Streamflix.Api.Controllers;
 

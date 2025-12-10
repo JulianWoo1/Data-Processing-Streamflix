@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Streamflix.Api.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Streamflix.Api.Controllers;
 
@@ -87,6 +88,7 @@ public class AccountController : ControllerBase
         return success ? Ok("Password reset successfully.") : BadRequest("Reset failed.");
     }
 
+    [Authorize]
     [HttpGet("getAccountInfo")]
     public async Task<IActionResult> GetAccountInfo([FromQuery] string email)
     {

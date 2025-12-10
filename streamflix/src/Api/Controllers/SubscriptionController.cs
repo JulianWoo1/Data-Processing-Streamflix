@@ -1,11 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Streamflix.Api.DTOs;
 using Streamflix.Infrastructure.Entities;
+using Microsoft.AspNetCore.Authorization;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Streamflix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class SubscriptionController : ControllerBase
 {
     private readonly ISubscriptionService _service;
@@ -13,6 +17,13 @@ public class SubscriptionController : ControllerBase
     public SubscriptionController(ISubscriptionService service)
     {
         _service = service;
+    }
+
+    private int GetCurrentAccountId()
+    {
+        var claim = User.FindFirst(JwtRegisteredClaimNames.Sub) ?? User.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim == null) throw new InvalidOperationException("No account id claim present.");
+        return int.Parse(claim.Value);
     }
 
     [HttpGet("{accountId}")]
@@ -30,6 +41,12 @@ public class SubscriptionController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Subscription>> CreateSubscription([FromBody] CreateSubscriptionDto dto)
     {
+        var currentAccountId = GetCurrentAccountId();
+        if (dto.AccountId != currentAccountId)
+        {
+            return Forbid();
+        }
+
         var sub = await _service.CreateSubscriptionAsync(dto);
 
         return CreatedAtAction(nameof(GetSubscription), new
@@ -59,7 +76,9 @@ public class SubscriptionController : ControllerBase
     [HttpDelete("{subscriptionId}")]
     public async Task<ActionResult> CancelSubscription(int subscriptionId)
     {
+        var currentAccountId = GetCurrentAccountId();
         var success = await _service.CancelSubscriptionAsync(subscriptionId);
+
         if (!success)
         {
             return NotFound("Subscription not found");
@@ -71,7 +90,10 @@ public class SubscriptionController : ControllerBase
     [HttpPost("renew/{subscriptionId}")]
     public async Task<ActionResult<Subscription?>> RenewSubscription(int subscriptionId)
     {
+        var currentAccountId = GetCurrentAccountId();
+
         var renewed = await _service.RenewSubscriptionAsync(subscriptionId);
+
         if (renewed == null)
         {
             return NotFound();
@@ -81,6 +103,7 @@ public class SubscriptionController : ControllerBase
     }
 
     [HttpGet("plans")]
+    [AllowAnonymous]
     public ActionResult<IEnumerable<object>> GetPlans()
     {
         return Ok(new[]

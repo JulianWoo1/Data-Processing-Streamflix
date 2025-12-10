@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Streamflix.Api.DTOs;
 using Streamflix.Infrastructure.Entities;
 using Streamflix.Api.Services;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Streamflix.Api.Controllers;
 
@@ -13,9 +15,20 @@ public class ContentController : ControllerBase
 {
     private readonly IContentService _contentService;
 
-    public ContentController(IContentService contentService)
+    private readonly IProfileService _profileService;
+
+    public ContentController(IContentService contentService, IProfileService profileService)
+
     {
         _contentService = contentService;
+        _profileService = profileService;
+    }
+
+    private int GetCurrentAccountId()
+    {
+        var claim = User.FindFirst(JwtRegisteredClaimNames.Sub) ?? User.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim == null) throw new InvalidOperationException("No account id claim present.");
+        return int.Parse(claim.Value);
     }
 
     [HttpGet("movies")]
@@ -45,6 +58,19 @@ public class ContentController : ControllerBase
     [Authorize]
     public async Task<ActionResult<IEnumerable<MovieDto>>> GetPersonalizedMovies([FromQuery] int profileId)
     {
+
+        var profile = await _profileService.GetProfileAsync(profileId);
+        if (profile == null)
+        {
+            return NotFound("Profile not found.");
+
+        }
+
+        var currentAccountId = GetCurrentAccountId();
+        if (profile.AccountId != currentAccountId)
+        {
+            return Forbid();
+        }
 
         var result = await _contentService.GetPersonalizedMoviesAsync(profileId);
 
@@ -120,6 +146,19 @@ public class ContentController : ControllerBase
     [Authorize]
     public async Task<ActionResult<IEnumerable<SeriesDto>>> GetPersonalizedSeries([FromQuery] int profileId)
     {
+        var profile = await _profileService.GetProfileAsync(profileId);
+        if (profile == null)
+        {
+            return NotFound("Profile not found.");
+
+        }
+
+        var currentAccountId = GetCurrentAccountId();
+        if (profile.AccountId != currentAccountId)
+        {
+            return Forbid();
+        }
+
         var result = await _contentService.GetPersonalizedSeriesAsync(profileId);
 
         if (!result.ProfileExists)
