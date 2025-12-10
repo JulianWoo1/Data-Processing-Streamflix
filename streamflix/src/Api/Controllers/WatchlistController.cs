@@ -1,32 +1,46 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Streamflix.Api.DTOs;
 using Streamflix.Infrastructure.Entities;
 using Streamflix.Api.Services;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Streamflix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class WatchlistController : ControllerBase
 {
     private readonly IWatchlistService _watchlistService;
 
-    public WatchlistController(IWatchlistService watchlistService)
+    private readonly IProfileService _profileService;
+    public WatchlistController(IWatchlistService watchlistService, IProfileService profileService)
     {
         _watchlistService = watchlistService;
+        _profileService = profileService;
+    }
+
+    private int GetCurrentAccountId()
+    {
+        var claim = User.FindFirst(JwtRegisteredClaimNames.Sub) ?? User.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim == null) throw new InvalidOperationException("No account id claim present in token.");
+        return int.Parse(claim.Value);
     }
 
     // Watchlist Endpoints\\
     [HttpGet("profile/{profileId}")]
     public async Task<ActionResult<WatchlistDto>> GetWatchlistByProfileId(int profileId)
     {
+        var profile = await _profileService.GetProfileAsync(profileId);
+        if (profile == null) return NotFound();
+        var currentAccountId = GetCurrentAccountId();
+        if (profile.AccountId != currentAccountId) return Forbid();
         var watchlist = await _watchlistService.GetWatchlistByProfileIdAsync(profileId);
 
-        if (watchlist == null)
-        {
-            return NotFound();
-        }
+        if (watchlist == null) return NotFound();
 
         return Ok(ToWatchlistDto(watchlist));
     }
@@ -34,6 +48,11 @@ public class WatchlistController : ControllerBase
     [HttpPost("profile/{profileId}/add/{contentId}")]
     public async Task<ActionResult<WatchlistDto>> AddContentToWatchlist(int profileId, int contentId)
     {
+        var profile = await _profileService.GetProfileAsync(profileId);
+        if (profile == null) return NotFound();
+        var currentAccountId = GetCurrentAccountId();
+        if (profile.AccountId != currentAccountId) return Forbid();
+
         try
         {
             var watchlist = await _watchlistService.AddContentToWatchlistAsync(profileId, contentId);
@@ -52,11 +71,14 @@ public class WatchlistController : ControllerBase
     [HttpDelete("profile/{profileId}/remove/{contentId}")]
     public async Task<ActionResult> RemoveFromWatchListByContent(int profileId, int contentId)
     {
+        var profile = await _profileService.GetProfileAsync(profileId);
+        if (profile == null) return NotFound();
+        var currentAccountId = GetCurrentAccountId();
+        if (profile.AccountId != currentAccountId) return Forbid();
+
         var removed = await _watchlistService.RemoveFromWatchlistAsync(profileId, contentId);
-        if (!removed)
-        {
-            return NotFound();
-        }
+
+        if (!removed) return NotFound();
 
         return NoContent();
     }

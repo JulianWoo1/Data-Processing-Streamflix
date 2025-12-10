@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Streamflix.Api.DTOs;
@@ -10,7 +11,6 @@ namespace Streamflix.Api.Controllers;
 [Route("api/[controller]")]
 public class ContentController : ControllerBase
 {
-
     private readonly IContentService _contentService;
 
     public ContentController(IContentService contentService)
@@ -19,6 +19,7 @@ public class ContentController : ControllerBase
     }
 
     [HttpGet("movies")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<MovieDto>>> GetMovies()
     {
         var movies = await _contentService.GetMoviesAsync();
@@ -27,6 +28,7 @@ public class ContentController : ControllerBase
     }
 
     [HttpGet("movies/{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult<MovieDto>> GetMovie(int id)
     {
         var movie = await _contentService.GetMovieByIdAsync(id);
@@ -40,6 +42,7 @@ public class ContentController : ControllerBase
     }
 
     [HttpGet("movies/personalized")]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<MovieDto>>> GetPersonalizedMovies([FromQuery] int profileId)
     {
 
@@ -54,6 +57,7 @@ public class ContentController : ControllerBase
     }
 
     [HttpGet("movies/title/{title}")]
+    [AllowAnonymous]
     public async Task<ActionResult<MovieDto>> GetMovieByTitle(string title)
     {
         var movie = await _contentService.GetMovieByTitleAsync(title);
@@ -67,6 +71,7 @@ public class ContentController : ControllerBase
     }
 
     [HttpGet("movies/genre/{genre}")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<MovieDto>>> GetMoviesByGenre(string genre)
     {
         var movies = await _contentService.GetMoviesByGenreAsync(genre);
@@ -75,6 +80,7 @@ public class ContentController : ControllerBase
     }
 
     [HttpGet("series")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<SeriesDto>>> GetSeries()
     {
         var series = await _contentService.GetSeriesAsync();
@@ -83,6 +89,7 @@ public class ContentController : ControllerBase
     }
 
     [HttpGet("series/{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult<SeriesDto>> GetSeries(int id)
     {
         var series = await _contentService.GetSeriesByIdAsync(id);
@@ -96,6 +103,7 @@ public class ContentController : ControllerBase
     }
 
     [HttpGet("series/title/{title}")]
+    [AllowAnonymous]
     public async Task<ActionResult<SeriesDto>> GetSeriesByTitle(string title)
     {
         var series = await _contentService.GetSeriesByTitleAsync(title);
@@ -109,6 +117,7 @@ public class ContentController : ControllerBase
     }
 
     [HttpGet("series/personalized")]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<SeriesDto>>> GetPersonalizedSeries([FromQuery] int profileId)
     {
         var result = await _contentService.GetPersonalizedSeriesAsync(profileId);
@@ -122,6 +131,7 @@ public class ContentController : ControllerBase
     }
 
     [HttpGet("series/genre/{genre}")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<SeriesDto>>> GetSeriesByGenre(string genre)
     {
         var seriesList = await _contentService.GetSeriesByGenreAsync(genre);

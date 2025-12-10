@@ -15,6 +15,7 @@ namespace Streamflix.Api.Services
         Task<bool> UpdateProgressAsync(int viewingHistoryId, UpdateViewingHistoryDto request);
         Task<bool> MarkAsCompletedAsync(int viewingHistoryId);
         Task<ViewingHistoryDto?> ResumeContentAsync(int profileId, int contentId);
+        Task<ViewingHistory?> GetHistoryByIdAsync(int viewingHistoryId);
     }
 
     public class ViewingHistoryService : IViewingHistoryService
@@ -101,6 +102,11 @@ namespace Streamflix.Api.Services
             }
 
             return ToDto(history);
+        }
+
+        public async Task<ViewingHistory?> GetHistoryByIdAsync(int viewingHistoryId)
+        {
+            return await _db.ViewingHistories.FindAsync(viewingHistoryId);
         }
 
         private static ViewingHistoryDto ToDto(ViewingHistory v) =>
