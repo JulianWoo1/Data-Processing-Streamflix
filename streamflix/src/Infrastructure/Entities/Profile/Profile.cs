@@ -17,4 +17,7 @@ public class Profile
 
     // Relatie met ViewingHistory (one-to-many)
     public ICollection<ViewingHistory> ViewingHistories { get; set; } = new List<ViewingHistory>();
+
+    // Navigation property naar Account
+    public Account Account { get; set; } = null!;
 }
