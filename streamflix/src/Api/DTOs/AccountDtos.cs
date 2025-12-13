@@ -19,8 +19,10 @@ public record VerifyAccountDto(
     [Required] string VerificationToken
 );
 
-public record LoginDto(
-    [Required] string Email, 
+public record LoginDto(    
+    [EmailAddress]
+    [Required] 
+    string Email, 
     [Required] string Password
 );
 
