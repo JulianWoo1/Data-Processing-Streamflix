@@ -33,17 +33,12 @@ public class AccountController : ControllerBase
         {
             var result = await _accountService.RegisterAsync(dto);
 
-            if (_hostEnvironment.IsDevelopment())
+            return Ok(new
             {
-                return Ok(new
-                {
-                    result.account.AccountId,
-                    result.account.Email,
-                    VerificationToken = result.verificationToken
-                });
-            }
-
-            return Ok(new { result.account.AccountId, result.account.Email });
+                result.account.AccountId,
+                result.account.Email,
+                VerificationToken = result.verificationToken
+            });
         }
         catch (InvalidOperationException ex)
         {

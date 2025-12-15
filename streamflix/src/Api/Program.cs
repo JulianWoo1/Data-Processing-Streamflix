@@ -87,6 +87,17 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddScoped<IReferralService, ReferralService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowViteDev",
+        builder =>
+        {
+            builder.WithOrigins("http://localhost:5173")
+                   .AllowAnyHeader()
+                   .AllowAnyMethod();
+        });
+});
+
 var app = builder.Build();
 
 app.UseSwagger();
@@ -95,6 +106,8 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Streamflix API V1");
     c.RoutePrefix = string.Empty;
 });
+
+app.UseCors("AllowViteDev");
 
 // app.UseHttpsRedirection();
 app.UseAuthentication();
