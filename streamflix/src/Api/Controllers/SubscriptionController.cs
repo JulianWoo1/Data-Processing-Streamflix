@@ -21,15 +21,18 @@ public class SubscriptionController : ControllerBase
 
     private int GetCurrentAccountId()
     {
-        var claim = User.FindFirst(JwtRegisteredClaimNames.Sub) ?? User.FindFirst(ClaimTypes.NameIdentifier);
+        var claim = User.FindFirst(JwtRegisteredClaimNames.Sub) 
+            ?? User.FindFirst(ClaimTypes.NameIdentifier);
         if (claim == null) throw new InvalidOperationException("No account id claim present.");
         return int.Parse(claim.Value);
     }
 
     [HttpGet("{accountId}")]
-    public async Task<ActionResult<Subscription>> GetSubscription(int accountId)
+    public async Task<ActionResult<Subscription>> GetMySubscription()
     {
+        var accountId = GetCurrentAccountId();
         var subscription = await _service.GetSubscriptionAsync(accountId);
+
         if (subscription == null)
         {
             return NotFound("Subscription not found");
@@ -41,29 +44,19 @@ public class SubscriptionController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Subscription>> CreateSubscription([FromBody] CreateSubscriptionDto dto)
     {
-        var currentAccountId = GetCurrentAccountId();
-        if (dto.AccountId != currentAccountId)
-        {
-            return Forbid();
-        }
+        var accountId = GetCurrentAccountId();
 
-        var sub = await _service.CreateSubscriptionAsync(dto);
+        var subscription = await _service.CreateSubscriptionAsync(accountId, dto);
 
-        return CreatedAtAction(nameof(GetSubscription), new
-        {
-            accountId = sub.AccountId
-        }, sub);
+        return CreatedAtAction(nameof(GetMySubscription), subscription);
     }
 
     [HttpPut("{subscriptionId}")]
     public async Task<ActionResult<Subscription?>> ChangeSubscription(int subscriptionId, [FromBody] ChangeSubscriptionDto dto)
     {
-        if (subscriptionId != dto.SubscriptionId)
-        {
-            return BadRequest("SubscriptionId mismatch");
-        }
+        var accountId = GetCurrentAccountId();
 
-        var updated = await _service.ChangeSubscriptionAsync(dto);
+        var updated = await _service.ChangeSubscriptionAsync(accountId, subscriptionId, dto);
 
         if (updated == null)
         {
@@ -76,8 +69,8 @@ public class SubscriptionController : ControllerBase
     [HttpDelete("{subscriptionId}")]
     public async Task<ActionResult> CancelSubscription(int subscriptionId)
     {
-        var currentAccountId = GetCurrentAccountId();
-        var success = await _service.CancelSubscriptionAsync(subscriptionId);
+        var accountId = GetCurrentAccountId();
+        var success = await _service.CancelSubscriptionAsync(accountId, subscriptionId);
 
         if (!success)
         {
@@ -90,9 +83,9 @@ public class SubscriptionController : ControllerBase
     [HttpPost("renew/{subscriptionId}")]
     public async Task<ActionResult<Subscription?>> RenewSubscription(int subscriptionId)
     {
-        var currentAccountId = GetCurrentAccountId();
+        var accountId = GetCurrentAccountId();
 
-        var renewed = await _service.RenewSubscriptionAsync(subscriptionId);
+        var renewed = await _service.RenewSubscriptionAsync(accountId, subscriptionId);
 
         if (renewed == null)
         {

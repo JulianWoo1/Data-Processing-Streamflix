@@ -26,7 +26,7 @@ public class SubscriptionService : ISubscriptionService
             .FirstOrDefaultAsync(s => s.AccountId == accountId && s.IsActive);
     }
 
-    public async Task<Subscription> CreateSubscriptionAsync(CreateSubscriptionDto dto)
+    public async Task<Subscription> CreateSubscriptionAsync(int accountId, CreateSubscriptionDto dto)
     {
         var type = dto.SubscriptionType.ToUpper();
 
@@ -56,9 +56,14 @@ public class SubscriptionService : ISubscriptionService
         return subscription;
     }
 
-    public async Task<Subscription?> ChangeSubscriptionAsync(ChangeSubscriptionDto dto)
+    public async Task<Subscription?> ChangeSubscriptionAsync(int accountId, int subscriptionId, ChangeSubscriptionDto dto)
     {
-        var subscription = await _db.Subscriptions.FindAsync(dto.SubscriptionId);
+        var subscription = await _db.Subscriptions
+            .FirstOrDefaultAsync(s =>
+                s.SubscriptionId == subscriptionId &&
+                s.AccountId == accountId &&
+                s.IsActive);
+
         if (subscription == null || !subscription.IsActive)
         {
             return null;            
@@ -84,9 +89,14 @@ public class SubscriptionService : ISubscriptionService
         return subscription;
     }
 
-    public async Task<bool> CancelSubscriptionAsync(int subscriptionId)
+    public async Task<bool> CancelSubscriptionAsync(int accountId, int subscriptionId)
     {
-        var subscription = await _db.Subscriptions.FindAsync(subscriptionId);
+        var subscription = await _db.Subscriptions
+            .FirstOrDefaultAsync(s =>
+            s.SubscriptionId == subscriptionId &&
+            s.AccountId == accountId && 
+            s.IsActive);
+
         if (subscription == null)
         {
             return false;            
@@ -99,13 +109,19 @@ public class SubscriptionService : ISubscriptionService
         return true;
     }
 
-    public async Task<Subscription?> RenewSubscriptionAsync(int subscriptionId)
+    public async Task<Subscription?> RenewSubscriptionAsync(int accoundtId, int subscriptionId)
     {
-        var subscription = await _db.Subscriptions.FindAsync(subscriptionId);
+        var subscription = await _db.Subscriptions
+            .FirstOrDefaultAsync(s =>
+                s.SubscriptionId == subscriptionId &&
+                s.AccountId == accoundtId &&
+                s.IsActive);
+
         if (subscription == null || !subscription.IsActive)
         {
             return null;
         }
+
         if (subscription.IsTrialPeriod && subscription.TrialPeriodEnd > DateTime.UtcNow)
         {
             subscription.IsTrialPeriod = false;
