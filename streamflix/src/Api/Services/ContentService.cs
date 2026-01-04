@@ -11,11 +11,17 @@ namespace Streamflix.Api.Services
         Task<Movie?> GetMovieByIdAsync(int id);
         Task<Movie?> GetMovieByTitleAsync(string title);
         Task<IEnumerable<Movie>> GetMoviesByGenreAsync(string genre);
+        Task<Movie> CreateMovieAsync(MovieRequestDto movieDto);
+        Task<Movie?> UpdateMovieAsync(int id, MovieRequestDto movieDto);
+        Task<bool> DeleteMovieAsync(int id);
 
         Task<IEnumerable<Series>> GetSeriesAsync();
         Task<Series?> GetSeriesByIdAsync(int id);
         Task<Series?> GetSeriesByTitleAsync(string title);
         Task<IEnumerable<Series>> GetSeriesByGenreAsync(string genre);
+        Task<Series> CreateSeriesAsync(SeriesRequestDto seriesDto);
+        Task<Series?> UpdateSeriesAsync(int id, SeriesRequestDto seriesDto);
+        Task<bool> DeleteSeriesAsync(int id);
 
         Task<PersonalizedMoviesResult> GetPersonalizedMoviesAsync(int profileId);
         Task<PersonalizedSeriesResult> GetPersonalizedSeriesAsync(int profileId);
@@ -68,6 +74,60 @@ namespace Streamflix.Api.Services
                 .ToListAsync();
         }
 
+        public async Task<Movie> CreateMovieAsync(MovieRequestDto movieDto)
+        {
+            var movie = new Movie
+            {
+                Title = movieDto.Title,
+                Description = movieDto.Description,
+                AgeRating = movieDto.AgeRating,
+                ImageURL = movieDto.ImageURL,
+                Duration = movieDto.Duration,
+                Genre = movieDto.Genre,
+                ContentWarnings = movieDto.ContentWarnings,
+                AvailableQualities = movieDto.AvailableQualities
+            };
+
+            _db.Movies.Add(movie);
+            await _db.SaveChangesAsync();
+
+            return movie;
+        }
+
+        public async Task<Movie?> UpdateMovieAsync(int id, MovieRequestDto movieDto)
+        {
+            var movie = await _db.Movies.FindAsync(id);
+            if (movie == null)
+            {
+                return null;
+            }
+
+            movie.Title = movieDto.Title;
+            movie.Description = movieDto.Description;
+            movie.AgeRating = movieDto.AgeRating;
+            movie.ImageURL = movieDto.ImageURL;
+            movie.Duration = movieDto.Duration;
+            movie.Genre = movieDto.Genre;
+            movie.ContentWarnings = movieDto.ContentWarnings;
+            movie.AvailableQualities = movieDto.AvailableQualities;
+
+            await _db.SaveChangesAsync();
+            return movie;
+        }
+
+        public async Task<bool> DeleteMovieAsync(int id)
+        {
+            var movie = await _db.Movies.FindAsync(id);
+            if (movie == null)
+            {
+                return false;
+            }
+
+            _db.Movies.Remove(movie);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<IEnumerable<Series>> GetSeriesAsync()
         {
             return await _db.Series
@@ -101,6 +161,59 @@ namespace Streamflix.Api.Services
                     .ThenInclude(season => season.Episodes)
                 .Where(s => s.Genre.ToLower() == normalizedGenre)
                 .ToListAsync();
+        }
+
+        public async Task<Series> CreateSeriesAsync(SeriesRequestDto seriesDto)
+        {
+            var series = new Series
+            {
+                Title = seriesDto.Title,
+                Description = seriesDto.Description,
+                AgeRating = seriesDto.AgeRating,
+                ImageURL = seriesDto.ImageURL,
+                Genre = seriesDto.Genre,
+                ContentWarnings = seriesDto.ContentWarnings,
+                AvailableQualities = seriesDto.AvailableQualities,
+                Seasons = new List<Season>()
+            };
+
+            _db.Series.Add(series);
+            await _db.SaveChangesAsync();
+
+            return series;
+        }
+
+        public async Task<Series?> UpdateSeriesAsync(int id, SeriesRequestDto seriesDto)
+        {
+            var series = await _db.Series.FindAsync(id);
+            if (series == null)
+            {
+                return null;
+            }
+
+            series.Title = seriesDto.Title;
+            series.Description = seriesDto.Description;
+            series.AgeRating = seriesDto.AgeRating;
+            series.ImageURL = seriesDto.ImageURL;
+            series.Genre = seriesDto.Genre;
+            series.ContentWarnings = seriesDto.ContentWarnings;
+            series.AvailableQualities = seriesDto.AvailableQualities;
+
+            await _db.SaveChangesAsync();
+            return series;
+        }
+
+        public async Task<bool> DeleteSeriesAsync(int id)
+        {
+            var series = await _db.Series.FindAsync(id);
+            if (series == null)
+            {
+                return false;
+            }
+
+            _db.Series.Remove(series);
+            await _db.SaveChangesAsync();
+            return true;
         }
 
         public async Task<PersonalizedMoviesResult> GetPersonalizedMoviesAsync(int profileId)

@@ -33,14 +33,29 @@ public class ContentController : ControllerBase
 
     [HttpGet("movies")]
     [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<MovieDto>>> GetMovies()
+    public async Task<IActionResult> GetMovies([FromQuery] string? title, [FromQuery] string? genre)
     {
-        var movies = await _contentService.GetMoviesAsync();
+        if (!string.IsNullOrEmpty(title))
+        {
+            var movie = await _contentService.GetMovieByTitleAsync(title);
+            if (movie == null)
+            {
+                return NotFound();
+            }
+            return Ok(ToMovieDto(movie));
+        }
 
-        return Ok(movies.Select(ToMovieDto));
+        if (!string.IsNullOrEmpty(genre))
+        {
+            var movies = await _contentService.GetMoviesByGenreAsync(genre);
+            return Ok(movies.Select(ToMovieDto));
+        }
+
+        var allMovies = await _contentService.GetMoviesAsync();
+        return Ok(allMovies.Select(ToMovieDto));
     }
 
-    [HttpGet("movies/{id}")]
+    [HttpGet("movies/{id:int}")]
     [AllowAnonymous]
     public async Task<ActionResult<MovieDto>> GetMovie(int id)
     {
@@ -56,65 +71,75 @@ public class ContentController : ControllerBase
 
     [HttpGet("movies/personalized")]
     [Authorize]
-    public async Task<ActionResult<IEnumerable<MovieDto>>> GetPersonalizedMovies([FromQuery] int profileId)
+    public async Task<IActionResult> GetPersonalizedMovies([FromQuery] int profileId)
     {
-
-        var profile = await _profileService.GetProfileAsync(profileId);
-        if (profile == null)
+        var validationResult = await ValidateProfileOwnership(profileId);
+        if (validationResult != null)
         {
-            return NotFound("Profile not found.");
-
-        }
-
-        var currentAccountId = GetCurrentAccountId();
-        if (profile.AccountId != currentAccountId)
-        {
-            return Forbid();
+            return validationResult;
         }
 
         var result = await _contentService.GetPersonalizedMoviesAsync(profileId);
 
-        if (!result.ProfileExists)
-        {
-            return NotFound("Profile not found.");
-        }
-
         return Ok(result.Movies.Select(ToMovieDto));
     }
 
-    [HttpGet("movies/title/{title}")]
-    [AllowAnonymous]
-    public async Task<ActionResult<MovieDto>> GetMovieByTitle(string title)
+    [HttpPost("movies")]
+    [Authorize]
+    public async Task<ActionResult<MovieDto>> CreateMovie([FromBody] MovieRequestDto movieDto)
     {
-        var movie = await _contentService.GetMovieByTitleAsync(title);
+        var movie = await _contentService.CreateMovieAsync(movieDto);
+        return CreatedAtAction(nameof(GetMovie), new { id = movie.ContentId }, ToMovieDto(movie));
+    }
 
+    [HttpPut("movies/{id:int}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateMovie(int id, [FromBody] MovieRequestDto movieDto)
+    {
+        var movie = await _contentService.UpdateMovieAsync(id, movieDto);
         if (movie == null)
         {
             return NotFound();
         }
-
-        return Ok(ToMovieDto(movie));
+        return NoContent();
     }
 
-    [HttpGet("movies/genre/{genre}")]
-    [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<MovieDto>>> GetMoviesByGenre(string genre)
+    [HttpDelete("movies/{id:int}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteMovie(int id)
     {
-        var movies = await _contentService.GetMoviesByGenreAsync(genre);
-
-        return Ok(movies.Select(ToMovieDto));
+        var success = await _contentService.DeleteMovieAsync(id);
+        if (!success)
+        {
+            return NotFound();
+        }
+        return NoContent();
     }
 
     [HttpGet("series")]
     [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<SeriesDto>>> GetSeries()
+    public async Task<IActionResult> GetSeries([FromQuery] string? title, [FromQuery] string? genre)
     {
-        var series = await _contentService.GetSeriesAsync();
+        if (!string.IsNullOrEmpty(title))
+        {
+            var series = await _contentService.GetSeriesByTitleAsync(title);
+            if (series == null)
+            {
+                return NotFound();
+            }
+            return Ok(ToSeriesWithSeasonsDto(series));
+        }
+        if (!string.IsNullOrEmpty(genre))
+        {
+            var seriesList = await _contentService.GetSeriesByGenreAsync(genre);
+            return Ok(seriesList.Select(ToSeriesWithSeasonsDto));
+        }
 
-        return Ok(series.Select(ToSeriesWithSeasonsDto));
+        var allSeries = await _contentService.GetSeriesAsync();
+        return Ok(allSeries.Select(ToSeriesWithSeasonsDto));
     }
 
-    [HttpGet("series/{id}")]
+    [HttpGet("series/{id:int}")]
     [AllowAnonymous]
     public async Task<ActionResult<SeriesDto>> GetSeries(int id)
     {
@@ -128,29 +153,59 @@ public class ContentController : ControllerBase
         return Ok(ToSeriesWithSeasonsDto(series));
     }
 
-    [HttpGet("series/title/{title}")]
-    [AllowAnonymous]
-    public async Task<ActionResult<SeriesDto>> GetSeriesByTitle(string title)
+    [HttpGet("series/personalized")]
+    [Authorize]
+    public async Task<IActionResult> GetPersonalizedSeries([FromQuery] int profileId)
     {
-        var series = await _contentService.GetSeriesByTitleAsync(title);
+        var validationResult = await ValidateProfileOwnership(profileId);
+        if (validationResult != null)
+        {
+            return validationResult;
+        }
 
+        var result = await _contentService.GetPersonalizedSeriesAsync(profileId);
+
+        return Ok(result.Series.Select(ToSeriesWithSeasonsDto));
+    }
+
+    [HttpPost("series")]
+    [Authorize]
+    public async Task<ActionResult<SeriesDto>> CreateSeries([FromBody] SeriesRequestDto seriesDto)
+    {
+        var series = await _contentService.CreateSeriesAsync(seriesDto);
+        return CreatedAtAction(nameof(GetSeries), new { id = series.ContentId }, ToSeriesWithSeasonsDto(series));
+    }
+
+    [HttpPut("series/{id:int}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateSeries(int id, [FromBody] SeriesRequestDto seriesDto)
+    {
+        var series = await _contentService.UpdateSeriesAsync(id, seriesDto);
         if (series == null)
         {
             return NotFound();
         }
-
-        return Ok(ToSeriesWithSeasonsDto(series));
+        return NoContent();
     }
 
-    [HttpGet("series/personalized")]
+    [HttpDelete("series/{id:int}")]
     [Authorize]
-    public async Task<ActionResult<IEnumerable<SeriesDto>>> GetPersonalizedSeries([FromQuery] int profileId)
+    public async Task<IActionResult> DeleteSeries(int id)
+    {
+        var success = await _contentService.DeleteSeriesAsync(id);
+        if (!success)
+        {
+            return NotFound();
+        }
+        return NoContent();
+    }
+
+    private async Task<IActionResult?> ValidateProfileOwnership(int profileId)
     {
         var profile = await _profileService.GetProfileAsync(profileId);
         if (profile == null)
         {
             return NotFound("Profile not found.");
-
         }
 
         var currentAccountId = GetCurrentAccountId();
@@ -159,23 +214,7 @@ public class ContentController : ControllerBase
             return Forbid();
         }
 
-        var result = await _contentService.GetPersonalizedSeriesAsync(profileId);
-
-        if (!result.ProfileExists)
-        {
-            return NotFound("Profile not found.");
-        }
-
-        return Ok(result.Series.Select(ToSeriesWithSeasonsDto));
-    }
-
-    [HttpGet("series/genre/{genre}")]
-    [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<SeriesDto>>> GetSeriesByGenre(string genre)
-    {
-        var seriesList = await _contentService.GetSeriesByGenreAsync(genre);
-
-        return Ok(seriesList.Select(ToSeriesWithSeasonsDto));
+        return null;
     }
 
     //Helper Methods\\
