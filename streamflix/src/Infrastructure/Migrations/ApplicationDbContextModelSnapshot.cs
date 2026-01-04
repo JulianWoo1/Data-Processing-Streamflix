@@ -145,6 +145,8 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("DiscountId");
 
+                    b.HasIndex("AccountId");
+
                     b.ToTable("Discounts");
                 });
 
@@ -200,6 +202,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("ProfileId");
+
+                    b.HasIndex("AccountId");
 
                     b.ToTable("Profiles");
                 });
@@ -276,6 +280,10 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("ReferralId");
 
+                    b.HasIndex("ReferredAccountId");
+
+                    b.HasIndex("ReferrerAccountId");
+
                     b.ToTable("Referrals");
                 });
 
@@ -341,6 +349,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("SubscriptionId");
+
+                    b.HasIndex("AccountId")
+                        .IsUnique();
 
                     b.ToTable("Subscriptions");
                 });
@@ -449,6 +460,17 @@ namespace Infrastructure.Migrations
                     b.HasDiscriminator().HasValue("Series");
                 });
 
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Discount", b =>
+                {
+                    b.HasOne("Account", "Account")
+                        .WithMany("Discounts")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+                });
+
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Episode", b =>
                 {
                     b.HasOne("Streamflix.Infrastructure.Entities.Season", "Season")
@@ -458,6 +480,17 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Season");
+                });
+
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Profile", b =>
+                {
+                    b.HasOne("Account", "Account")
+                        .WithMany("Profiles")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.ProfilePreference", b =>
@@ -471,6 +504,24 @@ namespace Infrastructure.Migrations
                     b.Navigation("Profile");
                 });
 
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Referral", b =>
+                {
+                    b.HasOne("Account", "ReferredAccount")
+                        .WithMany("ReceivedReferrals")
+                        .HasForeignKey("ReferredAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Account", "ReferrerAccount")
+                        .WithMany("SentReferrals")
+                        .HasForeignKey("ReferrerAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ReferredAccount");
+
+                    b.Navigation("ReferrerAccount");
+                });
+
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Season", b =>
                 {
                     b.HasOne("Streamflix.Infrastructure.Entities.Series", "Series")
@@ -480,6 +531,17 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Series");
+                });
+
+            modelBuilder.Entity("Streamflix.Infrastructure.Entities.Subscription", b =>
+                {
+                    b.HasOne("Account", "Account")
+                        .WithOne("Subscription")
+                        .HasForeignKey("Streamflix.Infrastructure.Entities.Subscription", "AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.ViewingHistory", b =>
@@ -495,11 +557,13 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Watchlist", b =>
                 {
-                    b.HasOne("Streamflix.Infrastructure.Entities.Profile", null)
+                    b.HasOne("Streamflix.Infrastructure.Entities.Profile", "Profile")
                         .WithOne("Watchlist")
                         .HasForeignKey("Streamflix.Infrastructure.Entities.Watchlist", "ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Profile");
                 });
 
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.WatchlistContent", b =>
@@ -519,6 +583,19 @@ namespace Infrastructure.Migrations
                     b.Navigation("Content");
 
                     b.Navigation("Watchlist");
+                });
+
+            modelBuilder.Entity("Account", b =>
+                {
+                    b.Navigation("Discounts");
+
+                    b.Navigation("Profiles");
+
+                    b.Navigation("ReceivedReferrals");
+
+                    b.Navigation("SentReferrals");
+
+                    b.Navigation("Subscription");
                 });
 
             modelBuilder.Entity("Streamflix.Infrastructure.Entities.Profile", b =>
