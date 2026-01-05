@@ -80,5 +80,42 @@ public class ApplicationDbContext : DbContext
             .HasMany(p => p.ViewingHistories)
             .WithOne(vh => vh.Profile)
             .HasForeignKey(vh => vh.ProfileId);
+
+        // Account -> Profile (One-to-Many)
+        modelBuilder.Entity<Account>()
+            .HasMany(a => a.Profiles)
+            .WithOne(p => p.Account)
+            .HasForeignKey(p => p.AccountId);
+
+        // Account -> Subscription (One-to-One)
+        modelBuilder.Entity<Account>()
+            .HasOne(a => a.Subscription)
+            .WithOne(s => s.Account)
+            .HasForeignKey<Subscription>(s => s.AccountId);
+
+        // Account -> Discount (One-to-Many)
+        modelBuilder.Entity<Account>()
+            .HasMany(a => a.Discounts)
+            .WithOne(d => d.Account)
+            .HasForeignKey(d => d.AccountId);
+
+        // Referral relationships
+        modelBuilder.Entity<Referral>()
+            .HasOne(r => r.ReferrerAccount)
+            .WithMany(a => a.SentReferrals)
+            .HasForeignKey(r => r.ReferrerAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Referral>()
+            .HasOne(r => r.ReferredAccount)
+            .WithMany(a => a.ReceivedReferrals)
+            .HasForeignKey(r => r.ReferredAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Profile -> Watchlist (One-to-One)
+        modelBuilder.Entity<Profile>()
+            .HasOne(p => p.Watchlist)
+            .WithOne(w => w.Profile)
+            .HasForeignKey<Watchlist>(w => w.ProfileId);
     }
 }

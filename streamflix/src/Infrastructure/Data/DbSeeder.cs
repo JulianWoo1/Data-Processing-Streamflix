@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Streamflix.Infrastructure.Entities;
-
+using Microsoft.AspNetCore.Identity;
 
 namespace Streamflix.Infrastructure.Data;
 
@@ -14,6 +14,11 @@ public static class DbSeeder
             SeedMockData(context);
         }
 
+        if (!context.Accounts.Any())
+        {
+            SeedAccounts(context);
+        }
+
         // Seed profiles if none exist
         if (!context.Profiles.Any())
         {
@@ -25,6 +30,33 @@ public static class DbSeeder
         {
             SeedWatchlists(context);
         }
+    }
+
+    private static void SeedAccounts(ApplicationDbContext context)
+    {
+        var passwordHasher = new PasswordHasher<Account>();
+        var account1 = new Account
+        {
+            Email = "test1@test.com",
+            IsActive = true,
+            IsVerified = true,
+            RegistrationDate = DateTime.UtcNow,
+            LastLogin = DateTime.UtcNow
+        };
+        account1.Password = passwordHasher.HashPassword(account1, "Wachtwoord123!");
+
+        var account2 = new Account
+        {
+            Email = "test2@test.com",
+            IsActive = true,
+            IsVerified = true,
+            RegistrationDate = DateTime.UtcNow,
+            LastLogin = DateTime.UtcNow
+        };
+        account2.Password = passwordHasher.HashPassword(account2, "Wachtwoord123!");
+
+        context.Accounts.AddRange(account1, account2);
+        context.SaveChanges();
     }
 
     private static void SeedMockData(ApplicationDbContext context)
@@ -91,9 +123,15 @@ public static class DbSeeder
 
     private static void SeedProfiles(ApplicationDbContext context)
     {
+        var accounts = context.Accounts.ToList();
+        if (accounts.Count < 2)
+        {
+            // Not enough accounts to seed profiles
+            return;
+        }
         var profile1 = new Profile
         {
-            AccountId = 1,
+            Account = accounts[0],
             Name = "Alice",
             AgeCategory = "Adult",
             ImageUrl = "https://example.com/images/alice.jpg",
@@ -120,7 +158,7 @@ public static class DbSeeder
 
         var profile2 = new Profile
         {
-            AccountId = 2,
+            Account = accounts[1],
             Name = "Bob",
             AgeCategory = "Teen",
             ImageUrl = "https://example.com/images/bob.jpg",

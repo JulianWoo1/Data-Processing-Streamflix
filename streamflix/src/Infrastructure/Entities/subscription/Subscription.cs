@@ -4,6 +4,7 @@ public class Subscription
 {
     public int SubscriptionId { get; set; }
     public int AccountId { get; set; }
+    public Account Account { get; set; } = null!;
     public string SubscriptionType { get; set; }
     public string SubscriptionDescription { get; set; }
     public double BasePrice { get; set; }

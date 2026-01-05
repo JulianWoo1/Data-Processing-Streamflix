@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -73,6 +73,12 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Discounts", x => x.DiscountId);
+                    table.ForeignKey(
+                        name: "FK_Discounts_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -89,6 +95,12 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Profiles", x => x.ProfileId);
+                    table.ForeignKey(
+                        name: "FK_Profiles_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -110,6 +122,18 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Referrals", x => x.ReferralId);
+                    table.ForeignKey(
+                        name: "FK_Referrals_Accounts_ReferredAccountId",
+                        column: x => x.ReferredAccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Referrals_Accounts_ReferrerAccountId",
+                        column: x => x.ReferrerAccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -131,6 +155,12 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Subscriptions", x => x.SubscriptionId);
+                    table.ForeignKey(
+                        name: "FK_Subscriptions_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -272,6 +302,11 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Discounts_AccountId",
+                table: "Discounts",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Episodes_SeasonId",
                 table: "Episodes",
                 column: "SeasonId");
@@ -283,9 +318,30 @@ namespace Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Profiles_AccountId",
+                table: "Profiles",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Referrals_ReferredAccountId",
+                table: "Referrals",
+                column: "ReferredAccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Referrals_ReferrerAccountId",
+                table: "Referrals",
+                column: "ReferrerAccountId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Seasons_SeriesId",
                 table: "Seasons",
                 column: "SeriesId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Subscriptions_AccountId",
+                table: "Subscriptions",
+                column: "AccountId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ViewingHistories_ProfileId",
@@ -312,9 +368,6 @@ namespace Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Accounts");
-
             migrationBuilder.DropTable(
                 name: "Discounts");
 
@@ -347,6 +400,9 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Profiles");
+
+            migrationBuilder.DropTable(
+                name: "Accounts");
         }
     }
 }

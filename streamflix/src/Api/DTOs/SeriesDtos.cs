@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Streamflix.Api.DTOs;
 
 public record SeriesDto(
@@ -14,15 +16,40 @@ public record SeriesDto(
 );
 
 public record SeasonDto(
-    int SeasonId,
+    int Id,
     int SeasonNumber,
     int TotalEpisodes,
     List<EpisodeDto> Episodes
 );
 
 public record EpisodeDto(
-    int EpisodeId,
+    int Id,
     int EpisodeNumber,
+    string Title,
+    int Duration
+);
+
+public record SeriesRequestDto(
+    [Required]
+    string Title,
+    string Description,
+    int AgeRating,
+    string ImageURL,
+    string Genre,
+    List<string> ContentWarnings,
+    List<string> AvailableQualities
+    // Seasons and episodes will be managed via separate endpoints for clarity
+);
+
+public record SeasonRequestDto(
+    [Required]
+    int SeasonNumber
+);
+
+public record EpisodeRequestDto(
+    [Required]
+    int EpisodeNumber,
+    [Required]
     string Title,
     int Duration
 );
