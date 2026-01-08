@@ -2,19 +2,13 @@ using System.ComponentModel.DataAnnotations;
 namespace Streamflix.Api.DTOs;
 
 public record CreateSubscriptionDto(
-    [Range(1, int.MaxValue, ErrorMessage = "AccountId must be a positive integer.")]
-    int AccountId,
-
     [Required]
     [MaxLength(50, ErrorMessage = "SubscriptionType cannot be longer than 50 characters.")]
     string SubscriptionType,
 
     [Required]
     [MaxLength(200, ErrorMessage = "SubscriptionDescription cannot be longer than 200 characters.")]
-    string SubscriptionDescription,
-
-    [Range(0, double.MaxValue, ErrorMessage = "BasePrice must be zero or a positive value.")]
-    double BasePrice
+    string SubscriptionDescription
 );
 
 public record ChangeSubscriptionDto(

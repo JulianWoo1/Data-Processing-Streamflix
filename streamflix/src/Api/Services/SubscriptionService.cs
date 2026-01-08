@@ -29,31 +29,53 @@ public class SubscriptionService : ISubscriptionService
     public async Task<Subscription> CreateSubscriptionAsync(int accountId, CreateSubscriptionDto dto)
     {
         var type = dto.SubscriptionType.ToUpper();
-
         if (!Prices.ContainsKey(type))
         {
-            throw new ArgumentException("Invalid subscription type. Allowed: SD, HD, UHD.");            
+            throw new ArgumentException("Invalid subscription type. Allowed: SD, HD, UHD.");
         }
 
-        var subscription = new Subscription
+        var existingSubscription = await _db.Subscriptions.FirstOrDefaultAsync(s => s.AccountId == accountId);
+
+        if (existingSubscription != null)
         {
-            AccountId = dto.AccountId,
-            SubscriptionType = type,
-            SubscriptionDescription = dto.SubscriptionDescription,
-            BasePrice = Prices[type],
+            if (existingSubscription.IsActive)
+            {
+                throw new InvalidOperationException("An active subscription for this account already exists.");
+            }
 
-            StartDate = DateTime.UtcNow,
-            EndDate = DateTime.UtcNow.AddMonths(1),
+            // Reactivate and update the existing subscription
+            existingSubscription.SubscriptionType = type;
+            existingSubscription.SubscriptionDescription = dto.SubscriptionDescription;
+            existingSubscription.BasePrice = Prices[type];
+            existingSubscription.StartDate = DateTime.UtcNow;
+            existingSubscription.EndDate = DateTime.UtcNow.AddMonths(1);
+            existingSubscription.IsActive = true;
+            existingSubscription.IsTrialPeriod = false; // They are resubscribing, no new trial
+            existingSubscription.TrialPeriodEnd = null;
 
-            IsActive = true,
-            IsTrialPeriod = true,
-            TrialPeriodEnd = DateTime.UtcNow.AddDays(7),
-        };
+            await _db.SaveChangesAsync();
+            return existingSubscription;
+        }
+        else
+        {
+            // Create a new subscription
+            var subscription = new Subscription
+            {
+                AccountId = accountId,
+                SubscriptionType = type,
+                SubscriptionDescription = dto.SubscriptionDescription,
+                BasePrice = Prices[type],
+                StartDate = DateTime.UtcNow,
+                EndDate = DateTime.UtcNow.AddMonths(1),
+                IsActive = true,
+                IsTrialPeriod = true, // First time subscription, give trial
+                TrialPeriodEnd = DateTime.UtcNow.AddDays(7),
+            };
 
-        _db.Subscriptions.Add(subscription);
-        await _db.SaveChangesAsync();
-
-        return subscription;
+            _db.Subscriptions.Add(subscription);
+            await _db.SaveChangesAsync();
+            return subscription;
+        }
     }
 
     public async Task<Subscription?> ChangeSubscriptionAsync(int accountId, int subscriptionId, ChangeSubscriptionDto dto)
@@ -66,14 +88,14 @@ public class SubscriptionService : ISubscriptionService
 
         if (subscription == null || !subscription.IsActive)
         {
-            return null;            
+            return null;
         }
 
         var type = dto.NewSubscriptionType.ToUpper();
 
         if (!Prices.ContainsKey(type))
         {
-            throw new ArgumentException("Invalid subscription type. Allowed: SD, HD, UHD.");            
+            throw new ArgumentException("Invalid subscription type. Allowed: SD, HD, UHD.");
         }
 
         subscription.SubscriptionType = type;
@@ -94,12 +116,12 @@ public class SubscriptionService : ISubscriptionService
         var subscription = await _db.Subscriptions
             .FirstOrDefaultAsync(s =>
             s.SubscriptionId == subscriptionId &&
-            s.AccountId == accountId && 
+            s.AccountId == accountId &&
             s.IsActive);
 
         if (subscription == null)
         {
-            return false;            
+            return false;
         }
 
         subscription.IsActive = false;

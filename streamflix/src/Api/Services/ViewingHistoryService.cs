@@ -11,7 +11,7 @@ namespace Streamflix.Api.Services
     public interface IViewingHistoryService
     {
         Task<IEnumerable<ViewingHistoryDto>> GetHistoryAsync(int profileId);
-        Task<ViewingHistoryDto> StartViewingAsync(ViewingHistoryDto request);
+        Task<ViewingHistoryDto> StartViewingAsync(CreateViewingHistoryDto request);
         Task<bool> UpdateProgressAsync(int viewingHistoryId, UpdateViewingHistoryDto request);
         Task<bool> MarkAsCompletedAsync(int viewingHistoryId);
         Task<ViewingHistoryDto?> ResumeContentAsync(int profileId, int contentId);
@@ -36,7 +36,7 @@ namespace Streamflix.Api.Services
             return histories.Select(ToDto).ToList();
         }
 
-        public async Task<ViewingHistoryDto> StartViewingAsync(ViewingHistoryDto request)
+        public async Task<ViewingHistoryDto> StartViewingAsync(CreateViewingHistoryDto request)
         {
             var newHistory = new ViewingHistory
             {

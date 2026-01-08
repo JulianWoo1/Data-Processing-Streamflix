@@ -21,13 +21,13 @@ public class SubscriptionController : ControllerBase
 
     private int GetCurrentAccountId()
     {
-        var claim = User.FindFirst(JwtRegisteredClaimNames.Sub) 
+        var claim = User.FindFirst(JwtRegisteredClaimNames.Sub)
             ?? User.FindFirst(ClaimTypes.NameIdentifier);
         if (claim == null) throw new InvalidOperationException("No account id claim present.");
         return int.Parse(claim.Value);
     }
 
-    [HttpGet("{accountId}")]
+    [HttpGet]
     public async Task<ActionResult<Subscription>> GetMySubscription()
     {
         var accountId = GetCurrentAccountId();
@@ -44,11 +44,18 @@ public class SubscriptionController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Subscription>> CreateSubscription([FromBody] CreateSubscriptionDto dto)
     {
-        var accountId = GetCurrentAccountId();
+        try
+        {
+            var accountId = GetCurrentAccountId();
 
-        var subscription = await _service.CreateSubscriptionAsync(accountId, dto);
+            var subscription = await _service.CreateSubscriptionAsync(accountId, dto);
 
-        return CreatedAtAction(nameof(GetMySubscription), subscription);
+            return CreatedAtAction(nameof(GetMySubscription), null, subscription);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
     }
 
     [HttpPut("{subscriptionId}")]

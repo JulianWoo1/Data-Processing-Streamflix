@@ -46,7 +46,7 @@ public class ViewingHistoryController : ControllerBase
 
     // POST start viewing content
     [HttpPost]
-    public async Task<ActionResult<ViewingHistoryDto>> StartViewing(ViewingHistoryDto request)
+    public async Task<ActionResult<ViewingHistoryDto>> StartViewing(CreateViewingHistoryDto request)
     {
         var profile = await _profileService.GetProfileAsync(request.ProfileId);
         if (profile == null) return NotFound();

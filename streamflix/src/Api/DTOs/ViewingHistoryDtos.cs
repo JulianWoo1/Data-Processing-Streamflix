@@ -1,6 +1,16 @@
 using System.ComponentModel.DataAnnotations;
 namespace Streamflix.Api.DTOs;
 
+public record CreateViewingHistoryDto(
+    [Range(1, int.MaxValue, ErrorMessage = "ProfileId must be a positive integer.")]
+    int ProfileId,
+
+    [Range(1, int.MaxValue, ErrorMessage = "ContentId must be a positive integer.")]
+    int ContentId,
+
+    int? EpisodeId
+);
+
 public record ViewingHistoryDto(
     [Range(1, int.MaxValue, ErrorMessage = "ViewingHistoryId must be a positive integer.")]
     int ViewingHistoryId,

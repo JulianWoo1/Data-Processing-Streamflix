@@ -44,7 +44,7 @@ const SubscriptionManagement = ({ token }: SubscriptionManagementProps) => {
       if (!accountId) return;
       try {
         const [sub, pls] = await Promise.all([
-          getSubscription(accountId, token).catch(() => null),
+          getSubscription(token).catch(() => null),
           getPlans(),
         ]);
         setSubscription(sub);
@@ -58,12 +58,10 @@ const SubscriptionManagement = ({ token }: SubscriptionManagementProps) => {
   }, [accountId, token]);
 
   const handleCreate = async () => {
-    if (!accountId || !selectedPlan) return;
+    if (!selectedPlan) return;
     const dto: CreateSubscriptionDto = {
-      accountId,
       subscriptionType: selectedPlan.type,
       subscriptionDescription: `A ${selectedPlan.type} subscription.`,
-      basePrice: selectedPlan.price,
     };
     try {
       const newSub = await createSubscription(dto, token);
