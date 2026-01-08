@@ -13,8 +13,8 @@ using Streamflix.Infrastructure.Data;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251216204306_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20260108085747_AddInitialCreate")]
+    partial class AddInitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

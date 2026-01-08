@@ -15,6 +15,19 @@ services:
     env_file:
       - .env
 
+  client:
+    build:
+      context: .
+      dockerfile: client.Dockerfile
+    container_name: streamflix_client
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client/client-app:/app
+      - /app/node_modules
+    depends_on:
+      - api
+
   db:
     image: postgres:16-alpine
     container_name: streamflix_db
