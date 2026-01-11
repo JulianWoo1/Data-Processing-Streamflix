@@ -21,7 +21,7 @@ const Verify = () => {
   };
 
   return (
-    <div>
+    <div className="section">
       <h2>Verify Account</h2>
       <form onSubmit={handleSubmit}>
         <div>

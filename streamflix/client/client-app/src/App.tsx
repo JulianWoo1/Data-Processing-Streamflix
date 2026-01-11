@@ -31,7 +31,7 @@ function App() {
   };
 
   return (
-    <div>
+    <div className="container">
       <h1>Streamflix Client</h1>
       <nav>
         {!token && (
@@ -71,6 +71,8 @@ function App() {
     </div>
   );
 }
+
+import RandomFact from "./components/RandomFact";
 
 const Home = ({
   token,
@@ -113,6 +115,7 @@ const Home = ({
 
   return (
     <div>
+      <RandomFact />
       <h2>Welcome!</h2>
       <button
         onClick={() => {
@@ -122,14 +125,20 @@ const Home = ({
       >
         Logout
       </button>
-      <SubscriptionManagement token={token} />
-      <ReferralManagement token={token} />
-      <ProfileManagement
-        token={token}
-        setSelectedProfileId={setSelectedProfileId}
-      />
+      <div className="section">
+        <SubscriptionManagement token={token} />
+      </div>
+      <div className="section">
+        <ReferralManagement token={token} />
+      </div>
+      <div className="section">
+        <ProfileManagement
+          token={token}
+          setSelectedProfileId={setSelectedProfileId}
+        />
+      </div>
       {selectedProfileId && (
-        <>
+        <div className="section">
           <Watchlist
             profileId={selectedProfileId}
             token={token}
@@ -143,7 +152,7 @@ const Home = ({
             token={token}
             fetchWatchlist={() => fetchWatchlist(selectedProfileId)}
           />
-        </>
+        </div>
       )}
     </div>
   );

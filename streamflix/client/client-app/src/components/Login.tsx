@@ -18,7 +18,7 @@ const Login = ({ setToken }: { setToken: (token: string | null) => void }) => {
   };
 
   return (
-    <div>
+    <div className="section">
       <h2>Login</h2>
       <form onSubmit={handleSubmit}>
         <div>
