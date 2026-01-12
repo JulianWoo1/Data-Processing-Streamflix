@@ -12,6 +12,7 @@ namespace Streamflix.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[Produces("application/json", "application/xml", "text/csv")]
 public class WatchlistController : ControllerBase
 {
     private readonly IWatchlistService _watchlistService;

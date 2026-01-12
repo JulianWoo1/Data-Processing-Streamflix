@@ -13,6 +13,7 @@ namespace Streamflix.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[Produces("application/json", "application/xml", "text/csv")]
 public class ViewingHistoryController : ControllerBase
 {
     private readonly IViewingHistoryService _service;

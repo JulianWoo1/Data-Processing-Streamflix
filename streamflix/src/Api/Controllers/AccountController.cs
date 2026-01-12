@@ -7,6 +7,7 @@ namespace Streamflix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Produces("application/json", "application/xml", "text/csv")]
 public class AccountController : ControllerBase
 {
     private readonly IAccountService _accountService;

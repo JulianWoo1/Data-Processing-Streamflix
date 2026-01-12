@@ -10,6 +10,7 @@ namespace Streamflix.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[Produces("application/json", "application/xml", "text/csv")]
 public class SubscriptionController : ControllerBase
 {
     private readonly ISubscriptionService _service;
