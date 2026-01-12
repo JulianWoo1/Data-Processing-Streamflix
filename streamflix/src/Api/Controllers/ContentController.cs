@@ -49,11 +49,11 @@ public class ContentController : ControllerBase
         if (!string.IsNullOrEmpty(genre))
         {
             var movies = await _contentService.GetMoviesByGenreAsync(genre);
-            return Ok(movies.Select(ToMovieDto));
+            return Ok(new MoviesDto { Movies = movies.Select(ToMovieDto).ToList() });
         }
 
         var allMovies = await _contentService.GetMoviesAsync();
-        return Ok(allMovies.Select(ToMovieDto));
+        return Ok(new MoviesDto { Movies = allMovies.Select(ToMovieDto).ToList() });
     }
 
     [HttpGet("movies/{id:int}")]
@@ -133,11 +133,11 @@ public class ContentController : ControllerBase
         if (!string.IsNullOrEmpty(genre))
         {
             var seriesList = await _contentService.GetSeriesByGenreAsync(genre);
-            return Ok(seriesList.Select(ToSeriesWithSeasonsDto));
+            return Ok(new SeriesListDto { Series = seriesList.Select(ToSeriesWithSeasonsDto).ToList() });
         }
 
         var allSeries = await _contentService.GetSeriesAsync();
-        return Ok(allSeries.Select(ToSeriesWithSeasonsDto));
+        return Ok(new SeriesListDto { Series = allSeries.Select(ToSeriesWithSeasonsDto).ToList() });
     }
 
     [HttpGet("series/{id:int}")]

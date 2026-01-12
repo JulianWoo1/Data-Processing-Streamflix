@@ -34,7 +34,7 @@ public class ViewingHistoryController : ControllerBase
 
     // GET all viewing history for a profile
     [HttpGet("{profileId}")]
-    public async Task<ActionResult<IEnumerable<ViewingHistoryDto>>> GetHistory(int profileId)
+    public async Task<ActionResult<ViewingHistoriesDto>> GetHistory(int profileId)
     {
         var profile = await _profileService.GetProfileAsync(profileId);
         if (profile == null) return NotFound();
@@ -42,7 +42,7 @@ public class ViewingHistoryController : ControllerBase
         if (profile.AccountId != currentAccountId) return Forbid();
 
         var histories = await _service.GetHistoryAsync(profileId);
-        return Ok(histories);
+        return Ok(new ViewingHistoriesDto { ViewingHistories = histories.ToList() });
     }
 
     // POST start viewing content

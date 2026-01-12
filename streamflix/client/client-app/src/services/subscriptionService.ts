@@ -80,7 +80,11 @@ export const renewSubscription = async (
   return response.data;
 };
 
+export interface SubscriptionPlansDto {
+  plans: SubscriptionPlan[];
+}
+
 export const getPlans = async () => {
-  const response = await api.get<SubscriptionPlan[]>("/subscription/plans");
-  return response.data;
+  const response = await api.get<SubscriptionPlansDto>("/subscription/plans");
+  return response.data.plans;
 };

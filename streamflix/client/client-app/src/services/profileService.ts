@@ -1,4 +1,4 @@
-import api from './api';
+import api from "./api";
 
 export interface ProfileDto {
   profileId: number;
@@ -22,22 +22,44 @@ export interface UpdateProfileDto {
   imageUrl: string;
 }
 
+export interface ProfilesDto {
+  profiles: ProfileDto[];
+}
+
 const getAuthHeaders = (token: string) => ({
   headers: { Authorization: `Bearer ${token}` },
 });
 
 export const getProfiles = async (token: string) => {
-  const response = await api.get<ProfileDto[]>('/profile', getAuthHeaders(token));
+  const response = await api.get<ProfilesDto>(
+    "/profile",
+    getAuthHeaders(token),
+  );
+  return response.data.profiles;
+};
+
+export const createProfile = async (
+  profile: CreateProfileDto,
+  token: string,
+) => {
+  const response = await api.post<ProfileDto>(
+    "/profile",
+    profile,
+    getAuthHeaders(token),
+  );
   return response.data;
 };
 
-export const createProfile = async (profile: CreateProfileDto, token: string) => {
-  const response = await api.post<ProfileDto>('/profile', profile, getAuthHeaders(token));
-  return response.data;
-};
-
-export const updateProfile = async (id: number, profile: UpdateProfileDto, token: string) => {
-  const response = await api.put(`/profile/${id}`, profile, getAuthHeaders(token));
+export const updateProfile = async (
+  id: number,
+  profile: UpdateProfileDto,
+  token: string,
+) => {
+  const response = await api.put(
+    `/profile/${id}`,
+    profile,
+    getAuthHeaders(token),
+  );
   return response.data;
 };
 

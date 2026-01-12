@@ -14,6 +14,8 @@ builder.Services
 
     .AddControllers(options =>
     {
+        options.RespectBrowserAcceptHeader = true;
+        options.ReturnHttpNotAcceptable = true;
         options.OutputFormatters.Add(new CsvOutputFormatter()); // Support CSV responses
     })
     .AddXmlSerializerFormatters(); // Support XML responses

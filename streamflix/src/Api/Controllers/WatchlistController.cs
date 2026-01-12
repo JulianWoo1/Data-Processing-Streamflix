@@ -87,21 +87,23 @@ public class WatchlistController : ControllerBase
     // Helper Methods\\
     // Convert Watchlist entity to WatchlistDto
     private static WatchlistDto ToWatchlistDto(Watchlist watchlist) =>
-        new WatchlistDto(
-            watchlist.WatchlistId,
-            watchlist.ProfileId,
-            watchlist.CreatedAt,
-            watchlist.Items.Select(wc => new WatchlistContentDto(
-                wc.WatchlistContentId,
-                wc.ContentId,
-                wc.Content.Title,
-                wc.Content.Description,
-                wc.Content.AgeRating,
-                wc.Content.ImageURL,
-                wc.Content.Genre,
-                wc.Content.ContentWarnings,
-                wc.Content.AvailableQualities,
-                wc.DateAdded
-            )).ToList()
-        );
+        new WatchlistDto
+        {
+            WatchlistId = watchlist.WatchlistId,
+            ProfileId = watchlist.ProfileId,
+            CreatedAt = watchlist.CreatedAt,
+            Items = watchlist.Items.Select(wc => new WatchlistContentDto
+            {
+                WatchlistContentId = wc.WatchlistContentId,
+                ContentId = wc.ContentId,
+                Title = wc.Content.Title,
+                Description = wc.Content.Description,
+                AgeRating = wc.Content.AgeRating,
+                ImageURL = wc.Content.ImageURL,
+                Genre = wc.Content.Genre,
+                ContentWarnings = wc.Content.ContentWarnings,
+                AvailableQualities = wc.Content.AvailableQualities,
+                DateAdded = wc.DateAdded
+            }).ToList()
+        };
 }

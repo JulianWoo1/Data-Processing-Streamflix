@@ -105,13 +105,14 @@ public class SubscriptionController : ControllerBase
 
     [HttpGet("plans")]
     [AllowAnonymous]
-    public ActionResult<IEnumerable<object>> GetPlans()
+    public ActionResult<SubscriptionPlansDto> GetPlans()
     {
-        return Ok(new[]
+        var plans = new List<SubscriptionPlanDto>
         {
-            new { Type = "SD",  Price = 7.99 },
-            new { Type = "HD",  Price = 10.99 },
-            new { Type = "UHD", Price = 13.99 }
-        });
+            new() { Type = "SD", Price = 7.99 },
+            new() { Type = "HD", Price = 10.99 },
+            new() { Type = "UHD", Price = 13.99 }
+        };
+        return Ok(new SubscriptionPlansDto { Plans = plans });
     }
 }

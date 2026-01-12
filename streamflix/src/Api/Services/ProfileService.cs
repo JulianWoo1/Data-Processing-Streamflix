@@ -126,30 +126,33 @@ namespace Streamflix.Api.Services
         }
 
         private static ProfileDto ToDto(Profile p) =>
-            new ProfileDto(
-                p.ProfileId,
-                p.AccountId,
-                p.Name,
-                p.AgeCategory,
-                p.ImageUrl,
-                p.Preference == null
+            new()
+            {
+                ProfileId = p.ProfileId,
+                AccountId = p.AccountId,
+                Name = p.Name,
+                AgeCategory = p.AgeCategory,
+                ImageUrl = p.ImageUrl,
+                Preference = p.Preference == null
                     ? null
-                    : new ProfilePreferenceDto(
-                        p.Preference.PreferredGenres,
-                        p.Preference.ContentType,
-                        p.Preference.MinimumAge,
-                        p.Preference.ContentFilters
-                    ),
-                p.ViewingHistories.Select(v => new ViewingHistoryDto(
-                    v.ViewingHistoryId,
-                    v.ProfileId,
-                    v.ContentId,
-                    v.EpisodeId,
-                    v.StartTime,
-                    v.EndTime,
-                    v.LastPosition,
-                    v.IsCompleted
-                ))
-            );
+                    : new ProfilePreferenceDto
+                    {
+                        PreferredGenres = p.Preference.PreferredGenres,
+                        ContentType = p.Preference.ContentType,
+                        MinimumAge = p.Preference.MinimumAge,
+                        ContentFilters = p.Preference.ContentFilters
+                    },
+                ViewingHistories = p.ViewingHistories.Select(v => new ViewingHistoryDto
+                {
+                    ViewingHistoryId = v.ViewingHistoryId,
+                    ProfileId = v.ProfileId,
+                    ContentId = v.ContentId,
+                    EpisodeId = v.EpisodeId,
+                    StartTime = v.StartTime,
+                    EndTime = v.EndTime,
+                    LastPosition = v.LastPosition,
+                    IsCompleted = v.IsCompleted
+                })
+            };
     }
 }

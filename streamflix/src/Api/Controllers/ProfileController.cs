@@ -32,12 +32,12 @@ public class ProfileController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProfileDto>>> GetProfiles()
+    public async Task<ActionResult<ProfilesDto>> GetProfiles()
     {
         var profiles = await _profileService.GetProfilesAsync();
         var currentAccountId = GetCurrentAccountId();
 
-        return Ok(profiles.Where(p => p.AccountId == currentAccountId));
+        return Ok(new ProfilesDto { Profiles = profiles.Where(p => p.AccountId == currentAccountId).ToList() });
     }
 
     [HttpGet("{id}")]
@@ -99,29 +99,4 @@ public class ProfileController : ControllerBase
 
         return NoContent();
     }
-
-    private static ProfileDto ToDto(Profile p) =>
-        new ProfileDto(
-            p.ProfileId,
-            p.AccountId,
-            p.Name,
-            p.AgeCategory,
-            p.ImageUrl,
-            p.Preference == null ? null : new ProfilePreferenceDto(
-                p.Preference.PreferredGenres,
-                p.Preference.ContentType,
-                p.Preference.MinimumAge,
-                p.Preference.ContentFilters
-            ),
-            p.ViewingHistories.Select(v => new ViewingHistoryDto(
-                v.ViewingHistoryId,
-                v.ProfileId,
-                v.ContentId,
-                v.EpisodeId,
-                v.StartTime,
-                v.EndTime,
-                v.LastPosition,
-                v.IsCompleted
-            ))
-        );
 }

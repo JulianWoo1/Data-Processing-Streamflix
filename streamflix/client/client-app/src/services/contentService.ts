@@ -1,4 +1,4 @@
-import api from './api';
+import api from "./api";
 
 export interface MovieDto {
   id: number;
@@ -39,32 +39,42 @@ export interface SeriesDto {
   seasons: SeasonDto[];
 }
 
+export interface MoviesDto {
+  movies: MovieDto[];
+}
+
+export interface SeriesListDto {
+  series: SeriesDto[];
+}
+
 export const getMovies = async () => {
-  const response = await api.get<MovieDto[]>('/content/movies');
-  return response.data;
+  const response = await api.get<MoviesDto>("/content/movies");
+  return response.data.movies;
 };
 
 export const getSeries = async () => {
-  const response = await api.get<SeriesDto[]>('/content/series');
-  return response.data;
+  const response = await api.get<SeriesListDto>("/content/series");
+  return response.data.series;
 };
 
 export const getMoviesByGenre = async (genre: string) => {
-    const response = await api.get<MovieDto[]>(`/content/movies/genre/${genre}`);
-    return response.data;
-}
+  const response = await api.get<MoviesDto>(`/content/movies?genre=${genre}`);
+  return response.data.movies;
+};
 
 export const getSeriesByGenre = async (genre: string) => {
-    const response = await api.get<SeriesDto[]>(`/content/series/genre/${genre}`);
-    return response.data;
-}
+  const response = await api.get<SeriesListDto>(
+    `/content/series?genre=${genre}`,
+  );
+  return response.data.series;
+};
 
 export const getMovieByTitle = async (title: string) => {
-    const response = await api.get<MovieDto>(`/content/movies/title/${title}`);
-    return response.data;
-}
+  const response = await api.get<MovieDto>(`/content/movies?title=${title}`);
+  return response.data;
+};
 
 export const getSeriesByTitle = async (title: string) => {
-    const response = await api.get<SeriesDto>(`/content/series/title/${title}`);
-    return response.data;
-}
+  const response = await api.get<SeriesDto>(`/content/series?title=${title}`);
+  return response.data;
+};

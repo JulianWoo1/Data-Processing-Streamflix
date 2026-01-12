@@ -22,16 +22,20 @@ export interface StartViewingDto {
   episodeId?: number;
 }
 
+export interface ViewingHistoriesDto {
+  viewingHistories: ViewingHistoryDto[];
+}
+
 const getAuthHeaders = (token: string) => ({
   headers: { Authorization: `Bearer ${token}` },
 });
 
 export const getHistory = async (profileId: number, token: string) => {
-  const response = await api.get<ViewingHistoryDto[]>(
+  const response = await api.get<ViewingHistoriesDto>(
     `/viewinghistory/${profileId}`,
     getAuthHeaders(token),
   );
-  return response.data;
+  return response.data.viewingHistories;
 };
 
 export const startViewing = async (data: StartViewingDto, token: string) => {
