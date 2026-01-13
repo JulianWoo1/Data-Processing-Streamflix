@@ -6,11 +6,18 @@ using System.Text;
 using Streamflix.Infrastructure.Data;
 using Streamflix.Api.Services;
 using Streamflix.Api.Settings;
+using Streamflix.Api.Formatting;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AddControllers()
+
+    .AddControllers(options =>
+    {
+        options.RespectBrowserAcceptHeader = true;
+        options.ReturnHttpNotAcceptable = true;
+        options.OutputFormatters.Add(new CsvOutputFormatter()); // Support CSV responses
+    })
     .AddXmlSerializerFormatters(); // Support XML responses
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -20,6 +27,11 @@ builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IContentService, ContentService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IWatchlistService, WatchlistService>();
+builder.Services.AddScoped<IViewingHistoryService, ViewingHistoryService>();
+
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 
@@ -47,8 +59,50 @@ builder.Services
     });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Streamflix API", Version = "v1" });
+
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+
+    var securityScheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Description = "Enter 'Bearer {token}'",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Reference = new Microsoft.OpenApi.Models.OpenApiReference
+        {
+            Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+            Id = "Bearer"
+        }
+    };
+
+    c.AddSecurityDefinition("Bearer", securityScheme);
+
+    var securityRequirement = new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        { securityScheme, System.Array.Empty<string>() }
+    };
+
+    c.AddSecurityRequirement(securityRequirement);
+});
 builder.Services.AddScoped<IReferralService, ReferralService>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowViteDev",
+        builder =>
+        {
+            builder.WithOrigins("http://localhost:5173")
+                   .AllowAnyHeader()
+                   .AllowAnyMethod();
+        });
+});
 
 var app = builder.Build();
 
@@ -58,6 +112,8 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Streamflix API V1");
     c.RoutePrefix = string.Empty;
 });
+
+app.UseCors("AllowViteDev");
 
 // app.UseHttpsRedirection();
 app.UseAuthentication();
@@ -100,5 +156,5 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.Urls.Add("http://0.0.0.0:5001");
+//app.Urls.Add("http://0.0.0.0:5001");
 app.Run();

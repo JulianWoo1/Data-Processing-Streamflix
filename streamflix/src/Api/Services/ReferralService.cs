@@ -35,29 +35,36 @@ public class ReferralService : IReferralService
         var referral = await _db.Referrals.FirstOrDefaultAsync(r => r.InvitationCode == dto.InvitationCode);
         if (referral == null || !referral.IsActive)
         {
-            return false;            
+            return false;
         }
 
         referral.ReferredAccountId = dto.ReferredAccountId;
         referral.AcceptDate = DateTime.UtcNow;
         referral.IsActive = false;
 
-        ApplyDiscount(referral);
+        if (!referral.IsDiscountApplied)
+        {
+            // Discount for the new user (referred)
+            var referredSubscription = await _db.Subscriptions.FirstOrDefaultAsync(s => s.AccountId == dto.ReferredAccountId && s.IsActive);
+            if (referredSubscription != null)
+            {
+                referredSubscription.BasePrice = Math.Max(0, referredSubscription.BasePrice - 2.50);
+            }
+
+            // Discount for the original user (referrer)
+            var referrerSubscription = await _db.Subscriptions.FirstOrDefaultAsync(s => s.AccountId == referral.ReferrerAccountId && s.IsActive);
+            if (referrerSubscription != null)
+            {
+                referrerSubscription.BasePrice = Math.Max(0, referrerSubscription.BasePrice - 2.50);
+            }
+
+            referral.IsDiscountApplied = true;
+            referral.DiscountStartDate = DateTime.UtcNow;
+            referral.DiscountEndDate = DateTime.UtcNow.AddMonths(1);
+        }
 
         await _db.SaveChangesAsync();
         return true;
-    }
-
-    private void ApplyDiscount(Referral referral)
-    {
-        if (referral.IsDiscountApplied)
-        {
-            return;            
-        }
-
-        referral.IsDiscountApplied = true;
-        referral.DiscountStartDate = DateTime.UtcNow;
-        referral.DiscountEndDate = DateTime.UtcNow.AddMonths(1);
     }
 
     public async Task<string> GetReferralStatusAsync(string invitationCode)
@@ -65,7 +72,7 @@ public class ReferralService : IReferralService
         var referral = await _db.Referrals.FirstOrDefaultAsync(r => r.InvitationCode == invitationCode);
         if (referral == null)
         {
-            return "Referral not found";   
+            return "Referral not found";
         }
 
         return referral.IsActive ? "Pending acceptance" : "Accepted";
@@ -81,8 +88,8 @@ public class ReferralService : IReferralService
 
         if (referral == null)
         {
-            return null;  
-        } 
+            return null;
+        }
 
         return new
         {

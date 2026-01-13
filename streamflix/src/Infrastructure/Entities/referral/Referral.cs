@@ -4,8 +4,11 @@ public class Referral
 {
     public int ReferralId { get; set; }
 
-    public int ReferrerAccountId { get; set; }     
-    public int? ReferredAccountId { get; set; }     
+    public int ReferrerAccountId { get; set; }
+    public Account ReferrerAccount { get; set; } = null!;
+
+    public int? ReferredAccountId { get; set; }
+    public Account ReferredAccount { get; set; } = null!;
 
     public string InvitationCode { get; set; } = null!;
     public DateTime InvitationDate { get; set; } = DateTime.UtcNow;

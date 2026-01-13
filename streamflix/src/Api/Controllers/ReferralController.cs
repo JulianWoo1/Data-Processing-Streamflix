@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using Streamflix.Api.Services;
 using Streamflix.Api.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Streamflix.Api.Controllers;
 
 [ApiController]
-[Route("referral")]
+[Route("api/[controller]")]
+[Authorize]
+[Produces("application/json", "application/xml", "text/csv")]
 public class ReferralController : ControllerBase
 {
     private readonly IReferralService _service;

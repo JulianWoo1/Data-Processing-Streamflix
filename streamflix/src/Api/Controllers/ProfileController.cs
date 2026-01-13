@@ -3,126 +3,100 @@ using Microsoft.EntityFrameworkCore;
 using Streamflix.Api.DTOs;
 using Streamflix.Infrastructure.Data;
 using Streamflix.Infrastructure.Entities;
+using Streamflix.Api.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Streamflix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
+[Produces("application/json", "application/xml", "text/csv")]
 public class ProfileController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IProfileService _profileService;
 
-    public ProfileController(ApplicationDbContext db)
+    public ProfileController(IProfileService profileService)
     {
-        _db = db;
+        _profileService = profileService;
     }
 
-    // GET all profiles
+    private int GetCurrentAccountId()
+    {
+        var claim = User.FindFirst(JwtRegisteredClaimNames.Sub) ?? User.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim == null) throw new InvalidOperationException("No account id claim present.");
+
+        return int.Parse(claim.Value);
+    }
+
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProfileDto>>> GetProfiles()
+    public async Task<ActionResult<ProfilesDto>> GetProfiles()
     {
-        var profiles = await _db.Profiles
-            .Include(p => p.Preference)
-            .ToListAsync();
+        var profiles = await _profileService.GetProfilesAsync();
+        var currentAccountId = GetCurrentAccountId();
 
-        return Ok(profiles.Select(ToDto));
+        return Ok(new ProfilesDto { Profiles = profiles.Where(p => p.AccountId == currentAccountId).ToList() });
     }
 
-    // GET profile by id
     [HttpGet("{id}")]
     public async Task<ActionResult<ProfileDto>> GetProfile(int id)
     {
-        var profile = await _db.Profiles
-            .Include(p => p.Preference)
-            .FirstOrDefaultAsync(p => p.ProfileId == id);
-
+        var profile = await _profileService.GetProfileAsync(id);
         if (profile == null) return NotFound();
-        return Ok(ToDto(profile));
+
+        var currentAccountId = GetCurrentAccountId();
+        if (profile.AccountId != currentAccountId) return Forbid();
+
+        return Ok(profile);
     }
 
-    // POST create profile
     [HttpPost]
     public async Task<ActionResult<ProfileDto>> CreateProfile(CreateProfileDto request)
     {
-        var profile = new Profile
-        {
-            AccountId = request.AccountId,
-            Name = request.Name,
-            AgeCategory = request.AgeCategory,
-            ImageUrl = request.ImageUrl
-        };
+        var currentAccountId = GetCurrentAccountId();
+        if (request.AccountId != currentAccountId) return Forbid();
+        var created = await _profileService.CreateProfileAsync(request);
 
-        _db.Profiles.Add(profile);
-        await _db.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetProfile), new { id = profile.ProfileId }, ToDto(profile));
+        return CreatedAtAction(nameof(GetProfile), new { id = created.ProfileId }, created);
     }
 
-    // PUT update profile
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProfile(int id, UpdateProfileDto request)
     {
-        var profile = await _db.Profiles.FindAsync(id);
-        if (profile == null) return NotFound();
+        var existing = await _profileService.GetProfileAsync(id);
+        if (existing == null) return NotFound();
+        var currentAccountId = GetCurrentAccountId();
+        if (existing.AccountId != currentAccountId) return Forbid();
+        var success = await _profileService.UpdateProfileAsync(id, request);
+        if (!success) return NotFound();
 
-        profile.Name = request.Name;
-        profile.AgeCategory = request.AgeCategory;
-        profile.ImageUrl = request.ImageUrl;
-
-        await _db.SaveChangesAsync();
         return NoContent();
     }
 
-    // DELETE profile
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProfile(int id)
     {
-        var profile = await _db.Profiles.FindAsync(id);
-        if (profile == null) return NotFound();
-
-        _db.Profiles.Remove(profile);
-        await _db.SaveChangesAsync();
+        var existing = await _profileService.GetProfileAsync(id);
+        if (existing == null) return NotFound();
+        var currentAccountId = GetCurrentAccountId();
+        if (existing.AccountId != currentAccountId) return Forbid();
+        var success = await _profileService.DeleteProfileAsync(id);
+        if (!success) return NotFound();
         return NoContent();
     }
 
-    // PUT update profile preference
     [HttpPut("{id}/preference")]
     public async Task<IActionResult> UpdatePreference(int id, UpdateProfilePreferenceDto request)
     {
-        var profile = await _db.Profiles
-            .Include(p => p.Preference)
-            .FirstOrDefaultAsync(p => p.ProfileId == id);
+        var existing = await _profileService.GetProfileAsync(id);
+        if (existing == null) return NotFound();
+        var currentAccountId = GetCurrentAccountId();
+        if (existing.AccountId != currentAccountId) return Forbid();
+        var success = await _profileService.UpdatePreferenceAsync(id, request);
+        if (!success) return NotFound();
 
-        if (profile == null) return NotFound();
-
-        if (profile.Preference == null)
-        {
-            profile.Preference = new ProfilePreference { ProfileId = id };
-            _db.ProfilePreferences.Add(profile.Preference);
-        }
-
-        profile.Preference.PreferredGenres = request.PreferredGenres;
-        profile.Preference.ContentType = request.ContentType;
-        profile.Preference.MinimumAge = request.MinimumAge;
-        profile.Preference.ContentFilters = request.ContentFilters;
-
-        await _db.SaveChangesAsync();
         return NoContent();
     }
-
-    // Helper method: map entity → DTO
-    private static ProfileDto ToDto(Profile p) =>
-        new ProfileDto(
-            p.ProfileId,
-            p.AccountId,
-            p.Name,
-            p.AgeCategory,
-            p.ImageUrl,
-            p.Preference == null ? null : new ProfilePreferenceDto(
-                p.Preference.PreferredGenres,
-                p.Preference.ContentType,
-                p.Preference.MinimumAge,
-                p.Preference.ContentFilters
-            )
-        );
 }

@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class AddInitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -73,6 +73,12 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Discounts", x => x.DiscountId);
+                    table.ForeignKey(
+                        name: "FK_Discounts_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -89,6 +95,12 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Profiles", x => x.ProfileId);
+                    table.ForeignKey(
+                        name: "FK_Profiles_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -110,6 +122,18 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Referrals", x => x.ReferralId);
+                    table.ForeignKey(
+                        name: "FK_Referrals_Accounts_ReferredAccountId",
+                        column: x => x.ReferredAccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Referrals_Accounts_ReferrerAccountId",
+                        column: x => x.ReferrerAccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -131,20 +155,12 @@ namespace Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Subscriptions", x => x.SubscriptionId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Watchlists",
-                columns: table => new
-                {
-                    WatchlistId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ProfileId = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Watchlists", x => x.WatchlistId);
+                    table.ForeignKey(
+                        name: "FK_Subscriptions_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -192,6 +208,73 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ViewingHistories",
+                columns: table => new
+                {
+                    ViewingHistoryId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ProfileId = table.Column<int>(type: "integer", nullable: false),
+                    ContentId = table.Column<int>(type: "integer", nullable: false),
+                    EpisodeId = table.Column<int>(type: "integer", nullable: true),
+                    StartTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EndTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    LastPosition = table.Column<int>(type: "integer", nullable: false),
+                    IsCompleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ViewingHistories", x => x.ViewingHistoryId);
+                    table.ForeignKey(
+                        name: "FK_ViewingHistories_Profiles_ProfileId",
+                        column: x => x.ProfileId,
+                        principalTable: "Profiles",
+                        principalColumn: "ProfileId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Watchlists",
+                columns: table => new
+                {
+                    WatchlistId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ProfileId = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Watchlists", x => x.WatchlistId);
+                    table.ForeignKey(
+                        name: "FK_Watchlists_Profiles_ProfileId",
+                        column: x => x.ProfileId,
+                        principalTable: "Profiles",
+                        principalColumn: "ProfileId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Episodes",
+                columns: table => new
+                {
+                    EpisodeId = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    EpisodeNumber = table.Column<int>(type: "integer", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Duration = table.Column<int>(type: "integer", nullable: false),
+                    SeasonId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Episodes", x => x.EpisodeId);
+                    table.ForeignKey(
+                        name: "FK_Episodes_Seasons_SeasonId",
+                        column: x => x.SeasonId,
+                        principalTable: "Seasons",
+                        principalColumn: "SeasonId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "WatchlistContents",
                 columns: table => new
                 {
@@ -218,27 +301,10 @@ namespace Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "Episodes",
-                columns: table => new
-                {
-                    EpisodeId = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    EpisodeNumber = table.Column<int>(type: "integer", nullable: false),
-                    Title = table.Column<string>(type: "text", nullable: false),
-                    Duration = table.Column<int>(type: "integer", nullable: false),
-                    SeasonId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Episodes", x => x.EpisodeId);
-                    table.ForeignKey(
-                        name: "FK_Episodes_Seasons_SeasonId",
-                        column: x => x.SeasonId,
-                        principalTable: "Seasons",
-                        principalColumn: "SeasonId",
-                        onDelete: ReferentialAction.Cascade);
-                });
+            migrationBuilder.CreateIndex(
+                name: "IX_Discounts_AccountId",
+                table: "Discounts",
+                column: "AccountId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Episodes_SeasonId",
@@ -252,9 +318,35 @@ namespace Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Profiles_AccountId",
+                table: "Profiles",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Referrals_ReferredAccountId",
+                table: "Referrals",
+                column: "ReferredAccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Referrals_ReferrerAccountId",
+                table: "Referrals",
+                column: "ReferrerAccountId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Seasons_SeriesId",
                 table: "Seasons",
                 column: "SeriesId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Subscriptions_AccountId",
+                table: "Subscriptions",
+                column: "AccountId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ViewingHistories_ProfileId",
+                table: "ViewingHistories",
+                column: "ProfileId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_WatchlistContents_ContentId",
@@ -265,14 +357,17 @@ namespace Infrastructure.Migrations
                 name: "IX_WatchlistContents_WatchlistId",
                 table: "WatchlistContents",
                 column: "WatchlistId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Watchlists_ProfileId",
+                table: "Watchlists",
+                column: "ProfileId",
+                unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Accounts");
-
             migrationBuilder.DropTable(
                 name: "Discounts");
 
@@ -289,19 +384,25 @@ namespace Infrastructure.Migrations
                 name: "Subscriptions");
 
             migrationBuilder.DropTable(
+                name: "ViewingHistories");
+
+            migrationBuilder.DropTable(
                 name: "WatchlistContents");
 
             migrationBuilder.DropTable(
                 name: "Seasons");
 
             migrationBuilder.DropTable(
-                name: "Profiles");
-
-            migrationBuilder.DropTable(
                 name: "Watchlists");
 
             migrationBuilder.DropTable(
                 name: "Contents");
+
+            migrationBuilder.DropTable(
+                name: "Profiles");
+
+            migrationBuilder.DropTable(
+                name: "Accounts");
         }
     }
 }

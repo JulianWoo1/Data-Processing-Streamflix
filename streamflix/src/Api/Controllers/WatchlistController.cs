@@ -1,137 +1,109 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Streamflix.Api.DTOs;
-using Streamflix.Infrastructure.Data;
 using Streamflix.Infrastructure.Entities;
+using Streamflix.Api.Services;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Streamflix.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
+[Produces("application/json", "application/xml", "text/csv")]
 public class WatchlistController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IWatchlistService _watchlistService;
 
-    public WatchlistController(ApplicationDbContext db)
+    private readonly IProfileService _profileService;
+    public WatchlistController(IWatchlistService watchlistService, IProfileService profileService)
     {
-        _db = db;
+        _watchlistService = watchlistService;
+        _profileService = profileService;
+    }
+
+    private int GetCurrentAccountId()
+    {
+        var claim = User.FindFirst(JwtRegisteredClaimNames.Sub) ?? User.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim == null) throw new InvalidOperationException("No account id claim present in token.");
+        return int.Parse(claim.Value);
     }
 
     // Watchlist Endpoints\\
-
-    // Get watchlist by Profile ID
     [HttpGet("profile/{profileId}")]
     public async Task<ActionResult<WatchlistDto>> GetWatchlistByProfileId(int profileId)
     {
-        var watchlist = await _db.Watchlists
-            .Include(w => w.Items)
-                .ThenInclude(wc => wc.Content)
-            .FirstOrDefaultAsync(w => w.ProfileId == profileId);
+        var profile = await _profileService.GetProfileAsync(profileId);
+        if (profile == null) return NotFound();
+        var currentAccountId = GetCurrentAccountId();
+        if (profile.AccountId != currentAccountId) return Forbid();
+        var watchlist = await _watchlistService.GetWatchlistByProfileIdAsync(profileId);
 
-        if (watchlist == null)
-        {
-            return NotFound();
-        }
+        if (watchlist == null) return NotFound();
 
         return Ok(ToWatchlistDto(watchlist));
     }
 
-    // Add content to watchlist (auto-creates watchlist if needed)
     [HttpPost("profile/{profileId}/add/{contentId}")]
     public async Task<ActionResult<WatchlistDto>> AddContentToWatchlist(int profileId, int contentId)
     {
-        // Optional but safer: ensure profile exists
-        var profileExists = await _db.Profiles.AnyAsync(p => p.ProfileId == profileId);
-        if (!profileExists)
+        var profile = await _profileService.GetProfileAsync(profileId);
+        if (profile == null) return NotFound();
+        var currentAccountId = GetCurrentAccountId();
+        if (profile.AccountId != currentAccountId) return Forbid();
+
+        try
         {
-            return NotFound("Profile not found.");
+            var watchlist = await _watchlistService.AddContentToWatchlistAsync(profileId, contentId);
+            return Ok(ToWatchlistDto(watchlist));
         }
-
-        // Optional: ensure content exists
-        var contentExists = await _db.Contents.AnyAsync(c => c.ContentId == contentId);
-        if (!contentExists)
+        catch (InvalidOperationException ex)
         {
-            return NotFound("Content not found.");
+            return BadRequest(ex.Message);
         }
-
-        var watchlist = await _db.Watchlists
-            .Include(w => w.Items)
-            .FirstOrDefaultAsync(w => w.ProfileId == profileId);
-
-        // Auto-create watchlist if it doesn't exist yet
-        if (watchlist == null)
+        catch (KeyNotFoundException ex)
         {
-            watchlist = new Watchlist
-            {
-                ProfileId = profileId,
-                CreatedAt = DateTime.UtcNow,
-                Items = new List<WatchlistContent>()
-            };
-            _db.Watchlists.Add(watchlist);
+            return NotFound(ex.Message);
         }
-
-        if (watchlist.Items.Any(wc => wc.ContentId == contentId))
-        {
-            return BadRequest("Content already exists in the watchlist.");
-        }
-
-        watchlist.Items.Add(new WatchlistContent
-        {
-            ContentId = contentId,
-            DateAdded = DateTime.UtcNow
-        });
-
-        await _db.SaveChangesAsync();
-
-        // Reload including Content so DTO has full info
-        watchlist = await _db.Watchlists
-            .Include(w => w.Items)
-                .ThenInclude(wc => wc.Content)
-            .FirstAsync(w => w.WatchlistId == watchlist.WatchlistId);
-
-        return Ok(ToWatchlistDto(watchlist));
     }
 
-    // Remove content from watchlist
     [HttpDelete("profile/{profileId}/remove/{contentId}")]
     public async Task<ActionResult> RemoveFromWatchListByContent(int profileId, int contentId)
     {
-        var item = await _db.WatchlistContents
-            .Include(wc => wc.Watchlist)
-            .FirstOrDefaultAsync(wc =>
-                wc.Watchlist.ProfileId == profileId &&
-                wc.ContentId == contentId);
+        var profile = await _profileService.GetProfileAsync(profileId);
+        if (profile == null) return NotFound();
+        var currentAccountId = GetCurrentAccountId();
+        if (profile.AccountId != currentAccountId) return Forbid();
 
-        if (item == null)
-        {
-            return NotFound();
-        }
+        var removed = await _watchlistService.RemoveFromWatchlistAsync(profileId, contentId);
 
-        _db.WatchlistContents.Remove(item);
-        await _db.SaveChangesAsync();
+        if (!removed) return NotFound();
 
         return NoContent();
     }
 
     // Helper Methods\\
-
     // Convert Watchlist entity to WatchlistDto
     private static WatchlistDto ToWatchlistDto(Watchlist watchlist) =>
-        new WatchlistDto(
-            watchlist.WatchlistId,
-            watchlist.ProfileId,
-            watchlist.CreatedAt,
-            watchlist.Items.Select(wc => new WatchlistContentDto(
-                wc.WatchlistContentId,
-                wc.ContentId,
-                wc.Content.Title,
-                wc.Content.Description,
-                wc.Content.AgeRating,
-                wc.Content.ImageURL,
-                wc.Content.Genre,
-                wc.Content.ContentWarnings,
-                wc.Content.AvailableQualities,
-                wc.DateAdded
-            )).ToList()
-        );
+        new WatchlistDto
+        {
+            WatchlistId = watchlist.WatchlistId,
+            ProfileId = watchlist.ProfileId,
+            CreatedAt = watchlist.CreatedAt,
+            Items = watchlist.Items.Select(wc => new WatchlistContentDto
+            {
+                WatchlistContentId = wc.WatchlistContentId,
+                ContentId = wc.ContentId,
+                Title = wc.Content.Title,
+                Description = wc.Content.Description,
+                AgeRating = wc.Content.AgeRating,
+                ImageURL = wc.Content.ImageURL,
+                Genre = wc.Content.Genre,
+                ContentWarnings = wc.Content.ContentWarnings,
+                AvailableQualities = wc.Content.AvailableQualities,
+                DateAdded = wc.DateAdded
+            }).ToList()
+        };
 }
