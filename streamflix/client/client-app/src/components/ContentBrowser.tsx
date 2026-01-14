@@ -6,8 +6,8 @@ import {
   type SeriesDto,
   getMoviesByGenre,
   getSeriesByGenre,
-  getMovieByTitle,
-  getSeriesByTitle,
+  searchMoviesByTitle,
+  searchSeriesByTitle,
 } from "../services/contentService";
 import { addContentToWatchlist } from "../services/watchlistService";
 import {
@@ -184,11 +184,11 @@ const ContentBrowser = ({
     try {
       setError("");
       if (contentType === "movies") {
-        const fetchedMovie = await getMovieByTitle(title);
-        setMovies(fetchedMovie ? [fetchedMovie] : []);
+        const fetchedMovies = await searchMoviesByTitle(title);
+        setMovies(fetchedMovies);
       } else {
-        const fetchedSeries = await getSeriesByTitle(title);
-        setSeries(fetchedSeries ? [fetchedSeries] : []);
+        const fetchedSeries = await searchSeriesByTitle(title);
+        setSeries(fetchedSeries);
       }
     } catch (err) {
       setError("Failed to fetch content by title.");

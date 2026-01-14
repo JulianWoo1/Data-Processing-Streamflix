@@ -69,12 +69,14 @@ export const getSeriesByGenre = async (genre: string) => {
   return response.data.series;
 };
 
-export const getMovieByTitle = async (title: string) => {
-  const response = await api.get<MovieDto>(`/content/movies?title=${title}`);
-  return response.data;
+export const searchMoviesByTitle = async (title: string) => {
+  const response = await api.get<MoviesDto>(`/content/movies?title=${title}`);
+  return response.data.movies;
 };
 
-export const getSeriesByTitle = async (title: string) => {
-  const response = await api.get<SeriesDto>(`/content/series?title=${title}`);
-  return response.data;
+export const searchSeriesByTitle = async (title: string) => {
+  const response = await api.get<SeriesListDto>(
+    `/content/series?title=${title}`,
+  );
+  return response.data.series;
 };

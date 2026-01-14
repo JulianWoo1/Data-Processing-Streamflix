@@ -11,6 +11,7 @@ Dit document biedt een overzicht van het Streamflix-project, de architectuur en 
     *   [Frontend (React)](#frontend-react)
     *   [Backend API (.NET)](#backend-api-net)
     *   [Infrastructuur (Database)](#infrastructuur-database)
+6.  [Testaccounts](#6-testaccounts)
 
 ---
 
@@ -105,3 +106,12 @@ Het project is opgedeeld in drie hoofdonderdelen: de frontend, de backend API en
     *   **`Data/ApplicationDbContext.cs`**: De `DbContext` van Entity Framework Core. Het fungeert als een brug tussen de C#-code en de database, en maakt het mogelijk om data op te vragen (queryen) en op te slaan.
     *   **`Migrations`**: Code-first migraties die door EF Core worden gegenereerd. Elke migratie beschrijft een verandering in de databasestructuur. Bij het opstarten van de API worden openstaande migraties automatisch op de database toegepast.
     *   **`Data/DbSeeder.cs`**: Een utility-klasse die de database vult met initiële, essentiële data (zoals filmgenres) wanneer de database voor het eerst wordt aangemaakt.
+
+---
+
+### 6. Testaccounts
+
+Voor testdoeleinden zijn er 10 gebruikersaccounts beschikbaar.
+
+*   **E-mailadressen**: `user1@streamflix.com` tot `user10@streamflix.com`
+*   **Wachtwoord**: `Password123!`
