@@ -9,7 +9,7 @@ namespace Streamflix.Api.Services
     {
         Task<IEnumerable<Movie>> GetMoviesAsync();
         Task<Movie?> GetMovieByIdAsync(int id);
-        Task<Movie?> GetMovieByTitleAsync(string title);
+        Task<IEnumerable<Movie>> SearchMoviesByTitleAsync(string title);
         Task<IEnumerable<Movie>> GetMoviesByGenreAsync(string genre);
         Task<Movie> CreateMovieAsync(MovieRequestDto movieDto);
         Task<Movie?> UpdateMovieAsync(int id, MovieRequestDto movieDto);
@@ -17,7 +17,7 @@ namespace Streamflix.Api.Services
 
         Task<IEnumerable<Series>> GetSeriesAsync();
         Task<Series?> GetSeriesByIdAsync(int id);
-        Task<Series?> GetSeriesByTitleAsync(string title);
+        Task<IEnumerable<Series>> SearchSeriesByTitleAsync(string title);
         Task<IEnumerable<Series>> GetSeriesByGenreAsync(string genre);
         Task<Series> CreateSeriesAsync(SeriesRequestDto seriesDto);
         Task<Series?> UpdateSeriesAsync(int id, SeriesRequestDto seriesDto);
@@ -59,11 +59,12 @@ namespace Streamflix.Api.Services
                 .FirstOrDefaultAsync(m => m.ContentId == id);
         }
 
-        public async Task<Movie?> GetMovieByTitleAsync(string title)
+        public async Task<IEnumerable<Movie>> SearchMoviesByTitleAsync(string title)
         {
             var normalizedTitle = title.ToLower();
             return await _db.Movies
-                .FirstOrDefaultAsync(m => m.Title.ToLower() == normalizedTitle);
+                .Where(m => m.Title.ToLower().Contains(normalizedTitle))
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<Movie>> GetMoviesByGenreAsync(string genre)
@@ -144,13 +145,14 @@ namespace Streamflix.Api.Services
                 .FirstOrDefaultAsync(s => s.ContentId == id);
         }
 
-        public async Task<Series?> GetSeriesByTitleAsync(string title)
+        public async Task<IEnumerable<Series>> SearchSeriesByTitleAsync(string title)
         {
             var normalizedTitle = title.ToLower();
             return await _db.Series
                 .Include(s => s.Seasons)
                     .ThenInclude(season => season.Episodes)
-                .FirstOrDefaultAsync(s => s.Title.ToLower() == normalizedTitle);
+                .Where(s => s.Title.ToLower().Contains(normalizedTitle))
+                .ToListAsync();
         }
 
         public async Task<IEnumerable<Series>> GetSeriesByGenreAsync(string genre)

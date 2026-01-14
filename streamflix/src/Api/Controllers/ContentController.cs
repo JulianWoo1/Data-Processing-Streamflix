@@ -38,12 +38,8 @@ public class ContentController : ControllerBase
     {
         if (!string.IsNullOrEmpty(title))
         {
-            var movie = await _contentService.GetMovieByTitleAsync(title);
-            if (movie == null)
-            {
-                return NotFound();
-            }
-            return Ok(ToMovieDto(movie));
+            var movies = await _contentService.SearchMoviesByTitleAsync(title);
+            return Ok(new MoviesDto { Movies = movies.Select(ToMovieDto).ToList() });
         }
 
         if (!string.IsNullOrEmpty(genre))
@@ -123,12 +119,8 @@ public class ContentController : ControllerBase
     {
         if (!string.IsNullOrEmpty(title))
         {
-            var series = await _contentService.GetSeriesByTitleAsync(title);
-            if (series == null)
-            {
-                return NotFound();
-            }
-            return Ok(ToSeriesWithSeasonsDto(series));
+            var seriesList = await _contentService.SearchSeriesByTitleAsync(title);
+            return Ok(new SeriesListDto { Series = seriesList.Select(ToSeriesWithSeasonsDto).ToList() });
         }
         if (!string.IsNullOrEmpty(genre))
         {
