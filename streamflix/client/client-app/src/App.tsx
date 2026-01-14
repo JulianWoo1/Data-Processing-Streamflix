@@ -9,6 +9,7 @@ import Watchlist from "./components/Watchlist";
 import ViewingHistory from "./components/ViewingHistory";
 import SubscriptionManagement from "./components/SubscriptionManagement";
 import ReferralManagement from "./components/ReferralManagement";
+import ContentManagement from "./components/ContentManagement";
 import "./App.css";
 import {
   getWatchlistByProfileId,
@@ -130,6 +131,9 @@ const Home = ({
       </div>
       <div className="section">
         <ReferralManagement token={token} />
+      </div>
+      <div className="section">
+        <ContentManagement />
       </div>
       <div className="section">
         <ProfileManagement
