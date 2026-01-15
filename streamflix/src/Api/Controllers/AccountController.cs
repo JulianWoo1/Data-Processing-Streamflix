@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Streamflix.Api.DTOs;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Streamflix.Api.Controllers;
 
@@ -86,8 +87,13 @@ public class AccountController : ControllerBase
 
     [Authorize]
     [HttpGet("getAccountInfo")]
-    public async Task<IActionResult> GetAccountInfo([FromQuery] string email)
+    public async Task<IActionResult> GetAccountInfo()
     {
+        var email = User.FindFirst(ClaimTypes.Email)?.Value;
+        if (email == null)
+        {
+            return Unauthorized();
+        }
         var account = await _accountService.GetAccountInfoAsync(email);
         if (account == null)
         {

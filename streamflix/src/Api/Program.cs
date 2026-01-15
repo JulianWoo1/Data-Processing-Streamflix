@@ -20,6 +20,8 @@ builder.Services
     })
     .AddXmlSerializerFormatters(); // Support XML responses
 
+builder.Services.AddHttpClient();
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
