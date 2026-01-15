@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Streamflix.Api.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using System.Security.Claims;
 
 namespace Streamflix.Api.Controllers;
 

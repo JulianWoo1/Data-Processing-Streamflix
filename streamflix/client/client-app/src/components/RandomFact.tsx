@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import api from "../services/api";
 
 const RandomFact: React.FC = () => {
   const [fact, setFact] = useState<string>("");
@@ -9,14 +10,11 @@ const RandomFact: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(
-        "https://uselessfacts.jsph.pl/api/v2/facts/random",
-      );
-      if (!response.ok) {
+      const response = await api.get("/RandomFact");
+      if (response.status !== 200) {
         throw new Error("Failed to fetch fact");
       }
-      const data = await response.json();
-      setFact(data.text);
+      setFact(response.data.text);
     } catch (err) {
       setError((err as Error).message);
     } finally {
