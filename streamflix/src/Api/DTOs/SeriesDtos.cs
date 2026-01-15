@@ -86,12 +86,27 @@ public class EpisodeDto
 public class SeriesRequestDto
 {
     [Required]
+    [MaxLength(200, ErrorMessage = "Title cannot be longer than 200 characters.")]
     public string Title { get; set; }
+
+    [Required]
+    [MaxLength(1000, ErrorMessage = "Description cannot be longer than 1000 characters.")]
     public string Description { get; set; }
+
+    [Required]
+    [Range(0, 21, ErrorMessage = "Age rating must be between 0 and 21.")]
     public int AgeRating { get; set; }
+
     public string ImageURL { get; set; }
+
+    [Required]
+    [MaxLength(100, ErrorMessage = "Genre cannot be longer than 100 characters.")]
     public string Genre { get; set; }
+
+    [Required]
     public List<string> ContentWarnings { get; set; }
+
+    [Required]
     public List<string> AvailableQualities { get; set; }
 
     public SeriesRequestDto()
@@ -108,15 +123,21 @@ public class SeriesRequestDto
 public class SeasonRequestDto
 {
     [Required]
+    [Range(1, 50, ErrorMessage = "Season number must be between 1 and 50.")]
     public int SeasonNumber { get; set; }
 }
 
 public class EpisodeRequestDto
 {
     [Required]
+    [Range(1, 500, ErrorMessage = "Episode number must be between 1 and 500.")]
     public int EpisodeNumber { get; set; }
+
     [Required]
+    [MaxLength(200, ErrorMessage = "Episode title cannot be longer than 200 characters.")]
     public string Title { get; set; }
+
+    [Range(0, 300, ErrorMessage = "Duration must be between 0 and 300 minutes.")]
     public int Duration { get; set; }
 
     public EpisodeRequestDto()

@@ -61,6 +61,7 @@ public class LoginResult
 public class RequestPasswordResetDto
 {
     [Required]
+    [EmailAddress]
     public string Email { get; set; }
 
     public RequestPasswordResetDto()
@@ -72,10 +73,14 @@ public class RequestPasswordResetDto
 public class ResetPasswordDto
 {
     [Required]
+    [EmailAddress]
     public string Email { get; set; }
     [Required]
     public string PasswordResetToken { get; set; }
     [Required]
+    [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
+    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$",
+        ErrorMessage = "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.")]
     public string NewPassword { get; set; }
 
     public ResetPasswordDto()

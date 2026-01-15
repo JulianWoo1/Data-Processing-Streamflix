@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Streamflix.Api.DTOs;
 
 public class ProfilePreferenceDto
@@ -25,9 +27,18 @@ public class ProfilePreferenceDto
 
 public class UpdateProfilePreferenceDto
 {
+    [Required]
     public List<string> PreferredGenres { get; set; }
+
+    [Required]
+    [MaxLength(50, ErrorMessage = "ContentType cannot be longer than 50 characters.")]
     public string ContentType { get; set; }
+
+    [Required]
+    [Range(0, 21, ErrorMessage = "MinimumAge must be between 0 and 21.")]
     public int MinimumAge { get; set; }
+
+    [Required]
     public List<string> ContentFilters { get; set; }
 
     public UpdateProfilePreferenceDto()
