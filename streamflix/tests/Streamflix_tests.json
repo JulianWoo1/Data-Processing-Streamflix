@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "Streamflix API attempt 2",
+    "name": "Streamflix API Tests",
     "description": "Comprehensive test collection for Streamflix API endpoints with edge cases",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
