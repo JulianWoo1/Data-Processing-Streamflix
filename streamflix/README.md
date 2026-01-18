@@ -115,3 +115,8 @@ Voor testdoeleinden zijn er 10 gebruikersaccounts beschikbaar.
 
 *   **E-mailadressen**: `user1@streamflix.com` tot `user10@streamflix.com`
 *   **Wachtwoord**: `Password123!`
+
+
+### 7. Postman Tests
+
+Om de api te testen in postman moet u de file Streamflix_tests.json in de map tests importeren in postman. Klik dan op Run en dan op Run Streamflix API Tests 
