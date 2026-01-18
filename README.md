@@ -74,7 +74,7 @@ De `streamflixdb` database is nu zichtbaar. De tabellen zijn te vinden onder **D
 
 De API is volledig gedocumenteerd met Swagger (OpenAPI), wat een interactieve UI biedt om alle endpoints te testen.
 
-*   **Swagger UI URL**: [http://localhost:5001/swagger](http://localhost:5001/swagger)
+*   **Swagger UI URL**: [http://localhost:5001](http://localhost:5001)
 
 Hier kunt u alle beschikbare endpoints zien, de vereiste parameters en de structuur van de responses. U kunt vanuit deze interface ook direct requests naar de API sturen.
 
