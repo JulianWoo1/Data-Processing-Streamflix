@@ -12,8 +12,9 @@ services:
       - db
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-    env_file:
-      - .env
+      POSTGRES_USER: postgres
+      POSTGRES_PASSOWRD: postgres
+      POSTGRES_DB: streamflixdb
 
   client:
     build:
@@ -32,8 +33,10 @@ services:
     image: postgres:16-alpine
     container_name: streamflix_db
     restart: always
-    env_file:
-      - .env
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSOWRD: postgres
+      POSTGRES_DB: streamflixdb
     ports:
       - "5432:5432"
     volumes:
